@@ -187,7 +187,7 @@ const StudentsView = ({ institution, onEdit }) => {
   );
 };
  
-const DraftsView = ({ institution }) => {
+const DraftsView = ({ institution, onEdit }) => {
   const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(true);
  
@@ -234,9 +234,14 @@ const DraftsView = ({ institution }) => {
                   {post.category && <span className="text-[10px] font-black text-on-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded uppercase tracking-widest">{post.category}</span>}
                 </div>
                 <h3 className="font-headline font-bold text-lg text-primary line-clamp-1">{post.title || 'Untitled Draft'}</h3>
-                <p className="text-xs text-on-surface-variant mt-1 line-clamp-1 font-medium">{post.summary || post.description}</p>
+                <p className="text-xs text-on-surface-variant mt-1 line-clamp-1 font-medium">{post.description || 'No description yet...'}</p>
               </div>
-              <button className="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">edit</button>
+              <button 
+                onClick={() => onEdit(post.id)}
+                className="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                edit
+              </button>
             </div>
           ))
         )}

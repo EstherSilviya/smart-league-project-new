@@ -75,9 +75,9 @@ export const AchievementDetail = () => {
       <main className="max-w-7xl mx-auto pb-32">
         {/* Hero Banner Section */}
         <header className="relative w-full h-[450px] md:h-[550px] overflow-hidden bg-primary shadow-2xl">
-          {post.imageURL ? (
+          {post.imageUrl || post.imageURL || post.image ? (
             <img 
-              src={post.imageURL} 
+              src={post.imageUrl || post.imageURL || post.image} 
               alt={post.title} 
               className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-1000" 
             />
@@ -143,8 +143,8 @@ export const AchievementDetail = () => {
                       className="group cursor-pointer bg-surface-container-low rounded-3xl overflow-hidden transition-all hover:shadow-xl border border-outline-variant/10"
                     >
                       <div className="aspect-video overflow-hidden">
-                        {r.imageURL ? (
-                          <img src={r.imageURL} alt={r.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        {r.imageUrl || r.imageURL ? (
+                          <img src={r.imageUrl || r.imageURL} alt={r.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         ) : (
                           <div className="w-full h-full bg-primary/5 flex items-center justify-center"><span className="material-symbols-outlined text-primary/10 text-4xl">school</span></div>
                         )}
@@ -206,7 +206,7 @@ export const AchievementDetail = () => {
                     onClick={() => navigate(`/profile/${post.studentSlug}`)}
                     className="w-full mt-10 py-5 bg-secondary-container text-on-secondary-container rounded-full font-black text-sm uppercase tracking-widest shadow-xl shadow-secondary/10 hover:scale-[1.03] transition-all"
                   >
-                    View Adrians Portfolio
+                    View Portfolio
                   </button>
                 </div>
               </div>

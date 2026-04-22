@@ -33,8 +33,12 @@ export const SuperAdminPortal = () => {
         imageUrl: d.data().imageUrl || d.data().imageURL || d.data().image // Handle all variants
       })));
 
-      // 3. Fetch active institutions
-      const qAllInst = query(collection(db, 'users'), where('role', '==', 'management'), where('status', '==', 'active'));
+      // 3. Fetch active administrative staff (Institutions & Management)
+      const qAllInst = query(
+        collection(db, 'users'), 
+        where('role', 'in', ['management', 'teacher', 'editor']), 
+        where('status', '==', 'active')
+      );
       const snapAllInst = await getDocs(qAllInst);
       setAllInstitutions(snapAllInst.docs.map(d => ({ id: d.id, ...d.data() })));
 
@@ -113,7 +117,8 @@ export const SuperAdminPortal = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete user from Auth');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete user from Auth');
       }
 
       setPendingUsers(prev => prev.filter(u => u.id !== userId));
@@ -285,7 +290,9 @@ export const SuperAdminPortal = () => {
                       </div>
                     </div>
                     <div className="col-span-3">
-                      <span className="bg-[#1a365d]/10 text-[#1a365d] px-3 py-1 rounded-sm text-[10px] font-black uppercase tracking-widest border border-[#1a365d]/20">Management</span>
+                      <span className="bg-[#1a365d]/10 text-[#1a365d] px-3 py-1 rounded-sm text-[10px] font-black uppercase tracking-widest border border-[#1a365d]/20">
+                        {user.role}
+                      </span>
                     </div>
                     <div className="col-span-2 text-center">
                       <p className="text-xs font-bold text-[#002045]">{user.institution}</p>

@@ -56,7 +56,7 @@ export const StudentProfile = () => {
             <img 
               alt="Student" 
               className="w-full h-full object-cover" 
-              src={student.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=002045&color=fff`} 
+              src={student.imageUrl || student.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=002045&color=fff`} 
             />
           </div>
           <h1 onClick={() => navigate('/')} className="text-xl font-bold text-blue-900 dark:text-white tracking-tight font-headline cursor-pointer">The Digital Atelier</h1>
@@ -98,7 +98,7 @@ export const StudentProfile = () => {
               <img 
                 alt={student.name} 
                 className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" 
-                src={student.image || 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80'} 
+                src={student.imageUrl || student.image || 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80'} 
               />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-secondary-container p-8 rounded-2xl shadow-xl max-w-[220px] border border-white/20">
@@ -187,6 +187,11 @@ export const StudentProfile = () => {
                     {item.category}
                   </span>
                 </div>
+                {item.imageUrl && (
+                  <div className="w-32 h-20 rounded-2xl overflow-hidden shrink-0 border border-outline-variant/10">
+                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
             )) : (
               <div className="p-20 text-center bg-surface-container-low rounded-[2.5rem] border border-dashed border-outline-variant/30">

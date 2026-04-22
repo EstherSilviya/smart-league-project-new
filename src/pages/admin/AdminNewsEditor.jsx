@@ -3,6 +3,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createNewsPost, updateNewsPost, createStudent, getStudentBySlug } from '../../firebase/firestore';
 import { uploadNewsImage } from '../../firebase/storageService';
 import { sendEmail } from '../../utils/emailService';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 // A simple utility to create slug from name
 const generateSlug = (name) => {
@@ -40,12 +42,13 @@ export const AdminNewsEditor = ({ onBack }) => {
 
   const handleSave = async (status) => {
     setSaving(true);
+    setUploadProgress(0);
     try {
       const slug = generateSlug(form.studentName);
       const postSlug = generateSlug(form.headline) + '-' + Math.random().toString(36).substring(7);
       setLastSlug(slug);
       
-      // 1. Auto-create student record in 'students' table IF it doesn't exist
+      // 1. Auto-create student record
       const existingStudent = await getStudentBySlug(slug);
       if (!existingStudent) {
         await createStudent({
@@ -56,11 +59,13 @@ export const AdminNewsEditor = ({ onBack }) => {
           institution: userProfile?.institution || 'Unknown',
           bio: `${form.studentName} is a distinguished student in the ${form.courseYear} program.`,
           supporters: 12,
-          profileCompleted: false
+          profileCompleted: false,
+          createdAt: new Date(),
+          imageUrl: '' // Initialize for consistency
         });
       }
 
-      // 2. Create news post with Author and Institution tracking
+      // 2. Create news post
       const newsData = {
         title: form.headline,
         postSlug: postSlug,
@@ -69,12 +74,13 @@ export const AdminNewsEditor = ({ onBack }) => {
         location: form.location,
         studentName: form.studentName,
         studentSlug: slug,
-        status: status, // 'draft' or 'pending'
+        status: status, 
         authorName: userProfile?.displayName || 'Editor',
         authorId: currentUser.uid,
         authorRole: userProfile?.role || 'editor',
         institution: userProfile?.institution || 'Unknown',
-        createdAt: new Date()
+        createdAt: new Date(),
+        imageUrl: '' // Initialize for consistency
       };
 
       const ref = await createNewsPost(newsData);
@@ -83,36 +89,48 @@ export const AdminNewsEditor = ({ onBack }) => {
       if (imageFile) {
         try {
           const url = await uploadNewsImage(ref.id, imageFile, (prog) => {
-            console.log(`Upload progress: ${prog}%`);
             setUploadProgress(prog);
           });
+          // Save imageUrl to news post
           await updateNewsPost(ref.id, { imageUrl: url });
-          console.log("Image successfully stored at:", url);
+
+          // ALWAYS save imageUrl to the student's profile in Firestore
+          const studentData = await getStudentBySlug(slug);
+          if (studentData && studentData.id) {
+            await updateDoc(doc(db, 'students', studentData.id), { imageUrl: url });
+            console.log('Student profile image updated:', url);
+          }
         } catch (imgErr) {
           console.error("Image upload failed:", imgErr);
-          alert("Warning: Post saved but image upload failed. Please try again.");
         }
       }
 
-      // 3. Send notification to Editor to complete profile
-      try {
-        await sendEmail({
-          to: userProfile?.email || currentUser.email,
-          subject: `Action Required: Complete Profile for ${form.studentName}`,
-          html: `
-            <div style="font-family: sans-serif; color: #1a1c1e; padding: 20px;">
-              <h2 style="color: #002045;">Post Submitted: ${form.headline}</h2>
-              <p>The achievement for <strong>${form.studentName}</strong> has been submitted for review.</p>
-              <p>To ensure the student's portfolio is complete, please finish their profile details in the Admin Portal.</p>
-              <div style="margin: 30px 0;">
-                <a href="${window.location.origin}/admin" style="background: #002045; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Go to Admin Portal</a>
-              </div>
-            </div>
-          `
-        });
-      } catch (e) { console.error(e); }
-
       setShowSuccess(true);
+      setSaving(false);
+
+      // 3. Send notification (Non-blocking)
+      try {
+        const recipientEmail = userProfile?.email || currentUser.email;
+        if (recipientEmail) {
+          sendEmail({
+            to: recipientEmail,
+            subject: `Submission Received: ${form.headline}`,
+            html: `
+              <div style="font-family: sans-serif; color: #1a1c1e;">
+                <h2 style="color: #002045;">Content Received</h2>
+                <p>Hello <strong>${userProfile?.displayName || 'Editor'}</strong>,</p>
+                <p>Your post for <strong>${form.studentName}</strong> has been uploaded and is waiting for admin approval.</p>
+                <p>To ensure the student's portfolio is complete, please finish their profile details in the Admin Portal.</p>
+                <div style="margin: 20px 0;">
+                  <a href="${window.location.origin}/admin" style="background: #002045; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">Go to Admin Portal</a>
+                </div>
+              </div>
+            `
+          }).catch(e => console.error("Email deferred error:", e));
+        }
+      } catch (e) { console.error("Email logic error:", e); }
+      
+      return; // Exit early to avoid the double setSaving at the bottom
     } catch (err) {
       console.error(err);
       alert('Failed to save content: ' + err.message);
@@ -315,9 +333,14 @@ export const AdminNewsEditor = ({ onBack }) => {
               <button 
                 onClick={() => handleSave('pending')} 
                 disabled={saving || !form.headline || !form.studentName}
-                className="bg-primary text-on-primary px-12 py-3 rounded-full font-bold shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                className="bg-primary text-on-primary px-12 py-3 rounded-full font-bold shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 min-w-[200px]"
               >
-                Publish Content
+                {saving ? (
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                    {uploadProgress > 0 ? `Uploading ${uploadProgress}%` : 'Saving...'}
+                  </div>
+                ) : 'Publish Content'}
               </button>
             </div>
           </div>
@@ -371,8 +394,9 @@ export const AdminNewsEditor = ({ onBack }) => {
               <span className="material-symbols-outlined text-4xl">check_circle</span>
             </div>
             <div>
-              <h2 className="text-3xl font-black tracking-tighter text-primary">Content Submitted!</h2>
-              <p className="text-on-surface-variant font-medium mt-2">"{form.headline}" is now pending review.</p>
+              <h2 className="text-3xl font-black tracking-tighter text-primary">Uploaded!</h2>
+              <p className="text-on-surface-variant font-medium mt-2">Waiting for Admin Approval.</p>
+              <p className="text-[11px] text-outline mt-1 font-bold uppercase tracking-widest italic opacity-60">Story: {form.headline}</p>
             </div>
             
             <div className="bg-surface-container-low p-4 rounded-2xl flex items-center gap-4 text-left border border-outline-variant/10">

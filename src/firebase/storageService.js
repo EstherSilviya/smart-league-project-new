@@ -3,40 +3,43 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebas
 import { storage } from './config';
 
 /**
- * Upload a file with progress tracking
+ * Upload a file to local backend server (Free Alternative to Firebase Storage)
  * @param {File} file - The file to upload
- * @param {string} path - Storage path e.g. 'avatars/uid.jpg'
- * @param {function} onProgress - Called with 0-100 progress
+ * @param {string} _path - (Ignored for local)
+ * @param {function} onProgress - (Simulated)
  * @returns {Promise<string>} Download URL
  */
-export const uploadFile = (file, path, onProgress) => {
-  return new Promise((resolve, reject) => {
-    const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+export const uploadFile = async (file, _path, onProgress) => {
+  const formData = new FormData();
+  formData.append('image', file);
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-        if (onProgress) onProgress(progress);
-      },
-      (error) => reject(error),
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve(downloadURL);
-      }
-    );
-  });
+  try {
+    const response = await fetch('http://localhost:5000/upload-local', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Local upload failed');
+    }
+
+    const data = await response.json();
+    if (onProgress) onProgress(100);
+    return data.url;
+  } catch (error) {
+    console.error('Local storage error:', error);
+    throw error;
+  }
 };
 
 export const uploadAvatar = (uid, file, onProgress) =>
-  uploadFile(file, `avatars/${uid}/${Date.now()}_${file.name}`, onProgress);
+  uploadFile(file, `avatars/${uid}`, onProgress);
 
 export const uploadAchievementImage = (achievementId, file, onProgress) =>
-  uploadFile(file, `achievements/${achievementId}/${Date.now()}_${file.name}`, onProgress);
+  uploadFile(file, `achievements/${achievementId}`, onProgress);
 
 export const uploadNewsImage = (newsId, file, onProgress) =>
-  uploadFile(file, `news/${newsId}/${Date.now()}_${file.name}`, onProgress);
+  uploadFile(file, `news/${newsId}`, onProgress);
 
 export const deleteFile = async (url) => {
   try {

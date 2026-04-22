@@ -115,6 +115,7 @@ export const assignAchievement = async (studentId, achievementData, assignedBy) 
 export const createNewsPost = async (data) => {
   return await addDoc(collection(db, 'news'), {
     ...data,
+    imageUrl: data.imageUrl || '',
     views: 0,
     likes: 0,
     status: data.status || 'draft',
