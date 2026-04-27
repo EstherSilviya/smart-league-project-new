@@ -15,7 +15,7 @@ export const Login = () => {
 
   const handleRedirect = (profile) => {
     if (profile.role === 'admin') return navigate('/super-admin');
-    if (profile.role === 'management' || profile.role === 'teacher') {
+    if (['management', 'teacher', 'editor', 'administrator'].includes(profile.role)) {
       if (profile.status === 'pending') {
         // Stay on login or a separate "Waiting" page
         return navigate('/login', { state: { approvalPending: true } });
@@ -24,6 +24,32 @@ export const Login = () => {
     }
     navigate(from || '/');
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlEmail = params.get('email');
+    const urlPass = params.get('password');
+    if (urlEmail && urlPass) {
+      setEmail(urlEmail);
+      setPassword(urlPass);
+      // Auto trigger login
+      const autoLogin = async () => {
+        setLoading(true);
+        try {
+          const cred = await login(urlEmail, urlPass);
+          const { getUserProfile } = await import('../../firebase/firestore');
+          const profile = await getUserProfile(cred.user.uid);
+          if (profile) handleRedirect(profile);
+          else navigate(from || '/');
+        } catch (err) {
+          console.error("Auto-login Error:", err);
+          setError('Auto-login failed. Please sign in manually.');
+        }
+        setLoading(false);
+      };
+      autoLogin();
+    }
+  }, [location.search]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -187,7 +213,7 @@ export const Login = () => {
 
 // ─── SIGNUP PAGE ──────────────────────────────────────────────────────────────
 export const Signup = () => {
-  const [form, setForm] = useState({ displayName: '', email: '', password: '', role: 'student', institution: '' });
+  const [form, setForm] = useState({ displayName: '', email: '', password: '', role: 'management', institution: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetchingInvite, setFetchingInvite] = useState(false);
@@ -331,19 +357,6 @@ export const Signup = () => {
             </div>
           ))}
 
-          {!inviteId && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">I am a...</label>
-              <div className="flex gap-3">
-                {['student', 'management'].map((r) => (
-                  <button key={r} type="button" onClick={() => setForm(prev => ({ ...prev, role: r }))}
-                    className={`flex-1 h-12 rounded-xl text-sm font-bold capitalize transition-all ${form.role === r ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'}`}>
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <button type="submit" disabled={loading}
             className="h-12 bg-primary text-on-primary rounded-xl font-bold text-sm tracking-wide hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2">

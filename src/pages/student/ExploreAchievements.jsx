@@ -22,7 +22,7 @@ export const ExploreAchievements = () => {
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj3XpYHf18K4rl9B3BKhU4Zd40GLhBkGumVQxwyJJiFkBMHw8taxYbOrPCHglyagLiQH7VvnrvG7BkAiY_ptjfnYFi63nx9m9aqUEePvgSwq9HsZ5XVZWINu1X2onvbF1ZaMkWL71KcjPS7pL-X_at-bsbC4_nawyxE6lyQ_u5ZUE1T0fV_Q9fLXxT9r_0VrLAxVbqJV6ltTToosqosztFxpwx4iRXZIMgZEA2PulgQOI0oO5g3Q_4DGiEcBHfRbwvgNa8mYohq3U" 
             />
           </div>
-          <span className="text-xl font-bold text-blue-900 dark:text-white tracking-tight font-headline">The Digital Atelier</span>
+          <span className="text-xl font-bold text-blue-900 dark:text-white tracking-tight font-headline">Smart League</span>
         </div>
         <button className="w-10 h-10 flex items-center justify-center text-blue-900 dark:text-blue-100 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors rounded-full transition-transform active:scale-95 duration-150 ease-in-out">
           <span className="material-symbols-outlined">search</span>
@@ -244,8 +244,8 @@ export const ExploreAchievements = () => {
           <span className="text-[11px] font-medium tracking-tight font-inter mt-0.5">Explore</span>
         </Link>
         <Link to="/profile" className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-2 hover:text-blue-700 dark:hover:text-amber-200 transition-colors">
-          <span className="material-symbols-outlined">school</span>
-          <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Portfolio</span>
+          <span className="material-symbols-outlined">event</span>
+          <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Events</span>
         </Link>
         <Link to="/notifications" className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-2 hover:text-blue-700 dark:hover:text-amber-200 transition-colors">
           <span className="material-symbols-outlined">notifications</span>

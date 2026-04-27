@@ -10,16 +10,16 @@ export const StaffView = () => {
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ email: '', name: '', password: '' });
+  const [inviteForm, setInviteForm] = useState({ email: '', name: '', role: 'editor' });
   const [sending, setSending] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch existing staff (teachers) for this institution
+      // Fetch existing staff (editors & administrators) for this institution
       const qStaff = query(
         collection(db, 'users'),
-        where('role', '==', 'teacher'),
+        where('role', 'in', ['editor', 'administrator']),
         where('institution', '==', userProfile.institution)
       );
       const snapStaff = await getDocs(qStaff);
@@ -57,8 +57,8 @@ export const StaffView = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: inviteForm.email,
-          password: inviteForm.password,
           name: inviteForm.name,
+          role: inviteForm.role,
           institution: institutionName,
           invitedBy: userProfile.uid || userProfile.id,
         }),
@@ -72,7 +72,7 @@ export const StaffView = () => {
 
       alert('Staff account created and welcome email sent! ✅');
       setShowInviteModal(false);
-      setInviteForm({ email: '', name: '', password: '' });
+      setInviteForm({ email: '', name: '', role: 'editor' });
       fetchData();
     } catch (err) {
       alert('Error: ' + err.message);
@@ -185,7 +185,12 @@ export const StaffView = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-primary">{member.displayName}</h4>
-                    <p className="text-sm text-on-surface-variant">{member.email}</p>
+                    <p className="text-sm text-on-surface-variant flex gap-2 items-center">
+                      {member.email}
+                      <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
+                        {member.role}
+                      </span>
+                    </p>
                   </div>
                 </div>
                 <button 
@@ -205,8 +210,8 @@ export const StaffView = () => {
       {showInviteModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-surface rounded-[2rem] w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-2xl font-extrabold text-primary mb-2">Invite Editor</h3>
-            <p className="text-on-surface-variant text-sm mb-6">Send an invitation to a staff member to join as an editor.</p>
+            <h3 className="text-2xl font-extrabold text-primary mb-2">Invite Staff</h3>
+            <p className="text-on-surface-variant text-sm mb-6">Send an invitation to a staff member. A temporary password will be emailed to them automatically.</p>
             
             <form onSubmit={handleInvite} className="space-y-4">
               <div className="space-y-1">
@@ -232,15 +237,16 @@ export const StaffView = () => {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-widest text-outline">Temporary Password</label>
-                <input 
-                  type="text" 
-                  value={inviteForm.password}
-                  onChange={e => setInviteForm(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Set a temporary password"
+                <label className="text-xs font-bold uppercase tracking-widest text-outline">Assign Role</label>
+                <select 
+                  value={inviteForm.role}
+                  onChange={e => setInviteForm(prev => ({ ...prev, role: e.target.value }))}
                   className="w-full h-12 bg-surface-container-low rounded-xl px-4 text-on-surface outline-none focus:ring-2 ring-primary/30"
                   required
-                />
+                >
+                  <option value="editor">Editor (Requires Approval to Post)</option>
+                  <option value="administrator">Administrator (Can Approve & Publish)</option>
+                </select>
               </div>
               
               <div className="flex gap-3 pt-4">

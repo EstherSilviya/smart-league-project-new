@@ -15,9 +15,18 @@ export const StudentProfile = () => {
         const studentData = await getStudentBySlug(slug);
         if (studentData) {
           setStudent(studentData);
-          // Fetch published achievements for this student
-          const qNews = await getNewsPosts({ status: 'published', studentSlug: slug });
-          setAchievements(qNews);
+          // Fetch published achievements for this student (legacy + new array format)
+          const qNewsLegacy = await getNewsPosts({ status: 'published', studentSlug: slug });
+          const qNewsNew = await getNewsPosts({ status: 'published', studentSlugs: slug });
+          
+          const merged = [...qNewsLegacy, ...qNewsNew];
+          const uniqueNews = Array.from(new Map(merged.map(item => [item.id, item])).values());
+          
+          setAchievements(uniqueNews.sort((a,b) => {
+            const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
+            const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+            return tB - tA;
+          }));
         }
       } catch (err) {
         console.error("Error fetching student profile:", err);
@@ -59,7 +68,7 @@ export const StudentProfile = () => {
               src={student.imageUrl || student.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=002045&color=fff`} 
             />
           </div>
-          <h1 onClick={() => navigate('/')} className="text-xl font-bold text-blue-900 dark:text-white tracking-tight font-headline cursor-pointer">The Digital Atelier</h1>
+          <h1 onClick={() => navigate('/')} className="text-xl font-bold text-blue-900 dark:text-white tracking-tight font-headline cursor-pointer">Smart League</h1>
         </div>
         <div className="flex items-center gap-6">
           <nav className="hidden md:flex items-center gap-8">

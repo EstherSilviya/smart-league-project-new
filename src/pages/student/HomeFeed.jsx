@@ -50,12 +50,24 @@ export const HomeFeed = () => {
     );
   }
 
+  // Helper to format student name(s)
+  const formatStudentName = (item) => {
+    if (item.studentsData && item.studentsData.length > 0) {
+      if (item.studentsData.length === 1) return item.studentsData[0].name;
+      return `${item.studentsData[0].name} & ${item.studentsData.length - 1} more`;
+    }
+    return item.studentName || 'Student Name';
+  };
+
   // Segment items for the bento grid
-  const heroItem = feedItems[0];
-  const majorItem = feedItems[1];
-  const smallItem = feedItems[2];
-  const medItem1 = feedItems[3];
-  const remainingItems = feedItems.slice(4);
+  const featuredItems = feedItems.filter(item => item.featured);
+  const regularItems = feedItems.filter(item => !item.featured);
+
+  const heroItem = regularItems[0];
+  const majorItem = regularItems[1];
+  const smallItem = regularItems[2];
+  const medItem1 = regularItems[3];
+  const remainingItems = regularItems.slice(4);
 
   return (
     <div className="bg-surface text-on-surface min-h-screen pb-32 font-body selection:bg-primary-container selection:text-on-primary-container">
@@ -84,6 +96,38 @@ export const HomeFeed = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 pt-8 space-y-12">
+        {/* Featured Section */}
+        {featuredItems.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 text-amber-500">
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              <h2 className="text-xl font-bold uppercase tracking-widest font-headline">Featured by Smart League</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredItems.map(item => (
+                <div 
+                  key={item.id}
+                  onClick={() => navigate(`/achievement/${item.postSlug || item.id}`)}
+                  className="bg-amber-50/50 rounded-2xl border-2 border-amber-200 overflow-hidden cursor-pointer hover:shadow-lg transition-all group"
+                >
+                  <div className="relative h-40 overflow-hidden bg-surface-container">
+                    <img 
+                      src={item.imageUrl || item.imageURL || 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3'} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-5 space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 bg-amber-200/50 px-2 py-0.5 rounded-sm">{item.category}</span>
+                    <h4 className="font-bold text-primary line-clamp-2">{item.title}</h4>
+                    <p className="text-xs font-medium text-outline">{formatStudentName(item)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Trending Achievement Hero */}
         {heroItem ? (
           <section 
@@ -93,7 +137,7 @@ export const HomeFeed = () => {
             {heroItem.imageUrl || heroItem.imageURL ? (
               <img 
                 alt={heroItem.title} 
-                className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity group-hover:scale-105 transition-transform duration-700" 
+                className="absolute inset-0 w-full h-full object-cover object-top opacity-60 mix-blend-luminosity group-hover:scale-105 transition-transform duration-700" 
                 src={heroItem.imageUrl || heroItem.imageURL} 
               />
             ) : (
@@ -156,7 +200,7 @@ export const HomeFeed = () => {
                 <div className="md:w-1/2 relative h-64 md:h-auto overflow-hidden">
                   <img 
                     alt={majorItem.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700" 
                     src={majorItem.imageUrl || majorItem.imageURL || 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80'} 
                   />
                   <div className="absolute top-4 left-4 bg-tertiary-container text-white px-3 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest">
@@ -175,7 +219,7 @@ export const HomeFeed = () => {
                   <div className="flex items-center justify-between pt-4">
                     <div className="flex -space-x-2">
                       <div className="w-8 h-8 rounded-full bg-primary-container border-2 border-surface flex items-center justify-center text-[10px] text-on-primary-container font-bold">
-                        {(majorItem.studentName || 'S')[0]}
+                        {formatStudentName(majorItem)[0]}
                       </div>
                       <div className="w-8 h-8 rounded-full bg-secondary-container border-2 border-surface flex items-center justify-center text-[10px] text-on-secondary-container font-bold">
                         {(majorItem.institution || 'I')[0]}
@@ -209,10 +253,10 @@ export const HomeFeed = () => {
               <div className="mt-auto pt-4 border-t border-outline-variant/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-primary">
-                    {(smallItem.studentName || 'S')[0]}
+                    {formatStudentName(smallItem)[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-primary leading-none">{smallItem.studentName}</p>
+                    <p className="text-sm font-bold text-primary leading-none">{formatStudentName(smallItem)}</p>
                     <p className="text-[11px] text-outline font-medium">{smallItem.institution}</p>
                   </div>
                 </div>
@@ -279,7 +323,7 @@ export const HomeFeed = () => {
                     <img 
                       src={item.imageUrl || item.imageURL || 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80'} 
                       alt={item.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-4 left-4 px-3 py-1 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest rounded-full">
                       {item.category}
@@ -290,7 +334,7 @@ export const HomeFeed = () => {
                       {item.title}
                     </h4>
                     <div className="flex items-center justify-between pt-2 border-t border-outline-variant/5">
-                      <span className="text-xs font-medium text-outline">{item.studentName}</span>
+                      <span className="text-xs font-medium text-outline">{formatStudentName(item)}</span>
                       <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Live Story</span>
                     </div>
                   </div>
@@ -326,9 +370,9 @@ export const HomeFeed = () => {
           <span className="material-symbols-outlined">explore</span>
           <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Explore</span>
         </Link>
-        <Link to="/profile" className="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined">school</span>
-          <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Portfolio</span>
+        <Link to="/events" className="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined">event</span>
+          <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Events</span>
         </Link>
         <Link to="/notifications" className="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
           <span className="material-symbols-outlined">notifications</span>

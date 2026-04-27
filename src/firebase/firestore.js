@@ -128,7 +128,9 @@ export const getNewsPosts = async (filters = {}) => {
   if (filters.status) constraints.push(where('status', '==', filters.status));
   if (filters.authorId) constraints.push(where('authorId', '==', filters.authorId));
   if (filters.studentSlug) constraints.push(where('studentSlug', '==', filters.studentSlug));
+  if (filters.studentSlugs) constraints.push(where('studentSlugs', 'array-contains', filters.studentSlugs));
   if (filters.institution) constraints.push(where('institution', '==', filters.institution));
+  if (filters.category) constraints.push(where('category', '==', filters.category));
   if (filters.limit) constraints.push(limit(filters.limit));
   const snap = await getDocs(query(collection(db, 'news'), ...constraints));
   const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -156,6 +158,20 @@ export const updateNewsPost = async (id, data) => {
 
 export const deleteNewsPost = async (id) => {
   await deleteDoc(doc(db, 'news', id));
+};
+
+// ─── EVENTS ───────────────────────────────────────────────────────────────────
+export const createEvent = async (eventData) => {
+  const ref = await addDoc(collection(db, 'events'), {
+    ...eventData,
+    createdAt: serverTimestamp(),
+  });
+  return ref;
+};
+
+export const getEvents = async () => {
+  const snap = await getDocs(query(collection(db, 'events'), orderBy('createdAt', 'desc')));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
 // ─── ACHIEVEMENT CRITERIA ─────────────────────────────────────────────────────

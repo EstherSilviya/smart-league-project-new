@@ -12,6 +12,7 @@ import { Login, Signup, ForgotPassword } from './pages/auth/Auth';
 // Student
 import { HomeFeed } from './pages/student/HomeFeed';
 import { StudentProfile } from './pages/student/StudentProfile';
+import { EventsPage } from './pages/student/EventsPage';
 import { ExploreAchievements } from './pages/student/ExploreAchievements';
 
 // Admin
@@ -175,6 +176,7 @@ const AppRoutes = () => (
     {/* ── PUBLIC/STUDENT ROUTES ── */}
     <Route path="/feed" element={<HomeFeed />} />
     <Route path="/explore" element={<ExploreAchievements />} />
+    <Route path="/events" element={<EventsPage />} />
     <Route path="/category/:categoryName" element={<CategoryNewsPage />} />
     <Route path="/achievement/:postId" element={<AchievementDetail />} />
     <Route path="/news/:postId" element={<AchievementDetail />} />
@@ -183,7 +185,7 @@ const AppRoutes = () => (
 
     {/* ── ADMIN/MANAGEMENT/EDITOR PORTAL ── */}
     <Route path="/admin/*" element={
-      <ProtectedRoute allowedRoles={['management', 'teacher']}>
+      <ProtectedRoute allowedRoles={['management', 'teacher', 'editor', 'administrator']}>
         <AdminPortal />
       </ProtectedRoute>
     } />

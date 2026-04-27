@@ -52,7 +52,11 @@ function NewsCard({ news, index, config }) {
   const navigate = useNavigate();
 
   const title       = news.title;
-  const studentName = news.studentName;
+  let studentName = news.studentName || "—";
+  if (news.studentsData && news.studentsData.length > 0) {
+    if (news.studentsData.length === 1) studentName = news.studentsData[0].name;
+    else studentName = `${news.studentsData[0].name} & ${news.studentsData.length - 1} more`;
+  }
   const likes       = news.likes ?? 0;
   const imageUrl    = news.imageUrl || null;
   const date        = news.createdAt?.toDate

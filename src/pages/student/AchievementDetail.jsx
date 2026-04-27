@@ -63,7 +63,7 @@ export const AchievementDetail = () => {
           <button onClick={() => navigate(-1)} className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-200/50 transition-colors active:scale-95 duration-150">
             <span className="material-symbols-outlined text-primary">arrow_back</span>
           </button>
-          <h1 className="text-xl font-extrabold text-primary tracking-tight font-headline">Smart League Atelier</h1>
+          <h1 className="text-xl font-extrabold text-primary tracking-tight font-headline">Smart League</h1>
         </div>
         <div className="flex items-center gap-3">
           <button className="text-primary hover:bg-surface-container-high rounded-full p-2 transition-colors">
@@ -165,50 +165,36 @@ export const AchievementDetail = () => {
             <div className="sticky top-28 space-y-8">
               <div className="bg-surface-container-highest rounded-[3rem] p-10 space-y-10 shadow-sm border border-outline-variant/10">
                 <div className="flex flex-col items-center text-center">
-                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-secondary mb-10 font-label">Student of the Moment</h3>
-                  <div className="relative group">
-                    <div className="w-36 h-36 rounded-full p-1.5 bg-gradient-to-tr from-secondary to-tertiary shadow-xl group-hover:scale-105 transition-transform duration-500">
-                      <div className="w-full h-full rounded-full bg-surface border-4 border-surface-container-highest flex items-center justify-center text-4xl font-black text-primary uppercase shadow-inner">
-                         {post.studentName?.[0] || 'S'}
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg border border-outline-variant/10">
-                      <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                    </div>
-                  </div>
-                  <h4 className="text-3xl font-extrabold font-headline text-primary mt-8 mb-2 leading-none">{post.studentName}</h4>
-                  <p className="text-on-surface-variant font-bold text-sm uppercase tracking-widest mb-10 opacity-60">Elite League Fellow</p>
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-secondary mb-10 font-label">
+                    {post.studentsData?.length > 1 ? 'Honored Students' : 'Student of the Moment'}
+                  </h3>
                   
-                  <div className="w-full space-y-4 text-left">
-                    <div className="flex items-center gap-4 p-4 bg-white/60 backdrop-blur-md rounded-2xl border border-outline-variant/10">
-                      <div className="w-10 h-10 bg-primary/5 rounded-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-primary text-xl">school</span>
-                      </div>
-                      <div className="text-sm">
-                        <p className="text-[10px] font-black text-outline uppercase tracking-widest">Institution</p>
-                        <p className="font-bold text-primary truncate max-w-[180px]">{post.institution}</p>
-                      </div>
-                    </div>
-                    {post.location && (
-                      <div className="flex items-center gap-4 p-4 bg-white/60 backdrop-blur-md rounded-2xl border border-outline-variant/10">
-                        <div className="w-10 h-10 bg-primary/5 rounded-full flex items-center justify-center">
-                          <span className="material-symbols-outlined text-primary text-xl">location_on</span>
+                  <div className="flex flex-col gap-8 w-full">
+                    {(post.studentsData && post.studentsData.length > 0 ? post.studentsData : [{ name: post.studentName, slug: post.studentSlug }]).map((student, idx) => (
+                      <div key={idx} className="flex flex-col items-center">
+                        <div className="relative group mb-4">
+                          <div className="w-24 h-24 md:w-32 md:h-32 rounded-full p-1.5 bg-gradient-to-tr from-secondary to-tertiary shadow-xl group-hover:scale-105 transition-transform duration-500">
+                            <div className="w-full h-full rounded-full bg-surface border-4 border-surface-container-highest flex items-center justify-center text-3xl md:text-4xl font-black text-primary uppercase shadow-inner">
+                              {student.name?.[0] || 'S'}
+                            </div>
+                          </div>
+                          <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg border border-outline-variant/10">
+                            <span className="material-symbols-outlined text-secondary text-sm md:text-base" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                          </div>
                         </div>
-                        <div className="text-sm">
-                          <p className="text-[10px] font-black text-outline uppercase tracking-widest">Origin</p>
-                          <p className="font-bold text-primary uppercase tracking-tighter">{post.location}</p>
-                        </div>
+                        <h4 className="text-xl md:text-2xl font-extrabold font-headline text-primary mb-1 leading-none text-center">{student.name}</h4>
+                        {student.courseYear && <p className="text-xs font-bold text-outline uppercase tracking-widest">{student.courseYear}</p>}
+                        
+                        <button 
+                          onClick={() => navigate(`/profile/${student.slug}`)}
+                          className="mt-4 px-6 py-2 bg-secondary-container text-on-secondary-container rounded-full font-black text-[10px] uppercase tracking-widest shadow-md shadow-secondary/10 hover:scale-[1.03] transition-all"
+                        >
+                          View Portfolio
+                        </button>
                       </div>
-                    )}
+                    ))}
                   </div>
-                  
-                  <button 
-                    onClick={() => navigate(`/profile/${post.studentSlug}`)}
-                    className="w-full mt-10 py-5 bg-secondary-container text-on-secondary-container rounded-full font-black text-sm uppercase tracking-widest shadow-xl shadow-secondary/10 hover:scale-[1.03] transition-all"
-                  >
-                    View Portfolio
-                  </button>
-                </div>
+                  </div>
               </div>
 
               {/* Quick Navigation Footer */}
@@ -237,7 +223,7 @@ export const AchievementDetail = () => {
         <div className="flex items-center justify-center bg-primary text-white rounded-full w-14 h-14 shadow-xl shadow-primary/20 scale-110">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_stories</span>
         </div>
-        <Link to={`/profile/${post.studentSlug}`} className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
+        <Link to={post.studentsData?.length > 0 ? `/profile/${post.studentsData[0].slug}` : `/profile/${post.studentSlug}`} className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
           <span className="material-symbols-outlined">school</span>
           <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Profile</span>
         </Link>

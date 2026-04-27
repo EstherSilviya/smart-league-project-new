@@ -9,7 +9,7 @@ export const SuperAdminPortal = () => {
   const { userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const [pendingUsers, setPendingUsers] = useState([]);
-  const [pendingNews, setPendingNews] = useState([]);
+  const [publishedNews, setPublishedNews] = useState([]);
   const [allInstitutions, setAllInstitutions] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,10 +24,10 @@ export const SuperAdminPortal = () => {
       const snapPending = await getDocs(qPending);
       setPendingUsers(snapPending.docs.map(d => ({ id: d.id, ...d.data() })));
 
-      // 2. Fetch news posts (pending and published for overview)
-      const qNews = query(collection(db, 'news')); // Fetch all to ensure visibility
+      // 2. Fetch all published news posts
+      const qNews = query(collection(db, 'news'), where('status', '==', 'published'));
       const snapNews = await getDocs(qNews);
-      setPendingNews(snapNews.docs.map(d => ({ 
+      setPublishedNews(snapNews.docs.map(d => ({ 
         id: d.id, 
         ...d.data(),
         imageUrl: d.data().imageUrl || d.data().imageURL || d.data().image // Handle all variants
@@ -85,22 +85,30 @@ export const SuperAdminPortal = () => {
     }
   };
 
-  const handleApproveNews = async (newsId) => {
-    if (!window.confirm('Approve this news post for public release?')) return;
+  const handleFeatureNews = async (newsId, currentStatus) => {
     try {
-      await updateDoc(doc(db, 'news', newsId), { status: 'published' });
-      setPendingNews(prev => prev.filter(n => n.id !== newsId));
-      alert('News published successfully! 📰');
+      await updateDoc(doc(db, 'news', newsId), { featured: !currentStatus });
+      setPublishedNews(prev => prev.map(n => n.id === newsId ? { ...n, featured: !currentStatus } : n));
     } catch (err) {
-      alert('Failed to approve news: ' + err.message);
+      alert('Failed to update feature status: ' + err.message);
+    }
+  };
+
+  const handleUnpublishNews = async (newsId) => {
+    if (!window.confirm('Unpublish this post? It will be sent back to the institution as a draft.')) return;
+    try {
+      await updateDoc(doc(db, 'news', newsId), { status: 'draft' });
+      setPublishedNews(prev => prev.filter(n => n.id !== newsId));
+    } catch (err) {
+      alert('Failed to unpublish news: ' + err.message);
     }
   };
 
   const handleDeleteNews = async (newsId) => {
-    if (!window.confirm('Reject and delete this news post?')) return;
+    if (!window.confirm('PERMANENTLY delete this news post?')) return;
     try {
       await deleteDoc(doc(db, 'news', newsId));
-      setPendingNews(prev => prev.filter(n => n.id !== newsId));
+      setPublishedNews(prev => prev.filter(n => n.id !== newsId));
     } catch (err) {
       alert('Failed to delete news: ' + err.message);
     }
@@ -163,8 +171,8 @@ export const SuperAdminPortal = () => {
             onClick={() => setActiveView('news')}
             className={`flex items-center gap-3 px-4 py-3 transition-all rounded-lg font-medium text-sm ${activeView === 'news' ? 'bg-white text-[#002045] font-bold shadow-sm' : 'text-slate-600 hover:bg-slate-200/50'}`}>
             <span className="material-symbols-outlined" style={activeView === 'news' ? { fontVariationSettings: "'FILL' 1" } : {}}>article</span>
-            <span>News Review</span>
-            {pendingNews.length > 0 && <span className="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingNews.length}</span>}
+            <span>All Posts</span>
+            {publishedNews.length > 0 && <span className="ml-auto bg-blue-100 text-blue-800 font-black text-[10px] px-1.5 py-0.5 rounded-full">{publishedNews.length}</span>}
           </button>
 
           <button 
@@ -311,18 +319,18 @@ export const SuperAdminPortal = () => {
           {activeView === 'news' && (
             <>
               <div className="grid grid-cols-12 px-8 py-4 bg-[#e9e7eb]/40 text-[10px] font-black uppercase tracking-[0.2em] text-[#74777f]">
-                <div className="col-span-5">Post Details / Author</div>
+                <div className="col-span-4">Post Details / Author</div>
                 <div className="col-span-3">Institution</div>
-                <div className="col-span-2 text-center">Status</div>
-                <div className="col-span-2 text-right">Actions</div>
+                <div className="col-span-2 text-center">Featured</div>
+                <div className="col-span-3 text-right">Actions</div>
               </div>
               <div className="divide-y divide-[#c4c6cf]/10">
-                {pendingNews
+                {publishedNews
                   .filter(post => post.title?.toLowerCase().includes(searchTerm.toLowerCase()) || post.authorName?.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .sort((a, b) => (b.status === 'pending' ? 1 : -1))
+                  .sort((a, b) => (b.featured ? 1 : -1))
                   .map(post => (
-                  <div key={post.id} className={`grid grid-cols-12 px-8 py-6 items-center hover:bg-[#e9e7eb]/20 transition-colors ${post.status === 'pending' ? 'bg-blue-50/30' : ''}`}>
-                    <div className="col-span-5 flex items-center gap-4">
+                  <div key={post.id} className={`grid grid-cols-12 px-8 py-6 items-center hover:bg-[#e9e7eb]/20 transition-colors ${post.featured ? 'bg-amber-50/50' : ''}`}>
+                    <div className="col-span-4 flex items-center gap-4">
                       {post.imageUrl ? <img src={post.imageUrl} alt="post" className="w-16 h-12 rounded object-cover border border-outline-variant/30" /> : <div className="w-16 h-12 rounded bg-surface-container flex items-center justify-center text-outline text-[8px] uppercase">No Image</div>}
                       <div>
                         <p className="font-bold text-[#1a1c1e] line-clamp-1">{post.title}</p>
@@ -331,19 +339,21 @@ export const SuperAdminPortal = () => {
                     </div>
                     <div className="col-span-3"><p className="text-sm font-bold text-[#002045]">{post.institution}</p></div>
                     <div className="col-span-2 text-center">
-                      <span className={`px-3 py-1 rounded-sm text-[10px] font-black uppercase tracking-widest border ${post.status === 'pending' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-green-100 text-green-800 border-green-200'}`}>
-                        {post.status}
-                      </span>
+                      <button 
+                        onClick={() => handleFeatureNews(post.id, post.featured)}
+                        className={`material-symbols-outlined text-2xl transition-colors ${post.featured ? 'text-amber-500' : 'text-slate-300 hover:text-amber-300'}`}
+                        style={post.featured ? { fontVariationSettings: "'FILL' 1" } : {}}
+                      >
+                        star
+                      </button>
                     </div>
-                    <div className="col-span-2 flex justify-end gap-2">
-                      {post.status === 'pending' && (
-                        <button onClick={() => handleApproveNews(post.id)} className="bg-[#002045] text-white px-4 py-2 rounded-lg text-xs font-bold hover:scale-105 transition-all shadow-md">Approve</button>
-                      )}
-                      <button onClick={() => handleDeleteNews(post.id)} className="p-2 text-[#74777f] hover:text-[#ba1a1a] transition-colors hover:bg-white rounded-lg"><span className="material-symbols-outlined text-xl">delete</span></button>
+                    <div className="col-span-3 flex justify-end gap-2">
+                      <button onClick={() => handleUnpublishNews(post.id)} className="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-300 transition-all">Unpublish</button>
+                      <button onClick={() => handleDeleteNews(post.id)} className="p-1.5 text-[#74777f] hover:text-[#ba1a1a] transition-colors hover:bg-white rounded-lg"><span className="material-symbols-outlined text-xl">delete</span></button>
                     </div>
                   </div>
                 ))}
-                {pendingNews.length === 0 && <div className="p-12 text-center text-[#74777f] uppercase tracking-widest text-xs font-bold">No news posts found.</div>}
+                {publishedNews.length === 0 && <div className="p-12 text-center text-[#74777f] uppercase tracking-widest text-xs font-bold">No published posts found.</div>}
               </div>
             </>
           )}

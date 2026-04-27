@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AdminNewsEditor } from './AdminNewsEditor';
+import { AdminEventEditor } from './AdminEventEditor';
 import { StaffView } from './AdminStaff';
 import { AdminStudentEdit } from './AdminStudentEdit';
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, onSnapshot } from 'firebase/firestore';
@@ -873,10 +875,107 @@ const AnalyticsView = ({ institution }) => {
   );
 };
  
+const ReviewPostsView = ({ institution }) => {
+  const [pendingPosts, setPendingPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!institution) return;
+    
+    try {
+      const q = query(
+        collection(db, 'news'),
+        where('institution', '==', institution),
+        where('status', '==', 'pending')
+      );
+      
+      const unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          const posts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          // Sort client-side to avoid composite index requirement
+          posts.sort((a, b) => {
+            const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+            const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+            return tB - tA;
+          });
+          setPendingPosts(posts);
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching pending posts:", error);
+          setLoading(false);
+        }
+      );
+      
+      return () => unsubscribe();
+    } catch (err) {
+      console.error("Setup error:", err);
+      setLoading(false);
+    }
+  }, [institution]);
+
+  const handleApprove = async (id) => {
+    try {
+      await updateDoc(doc(db, 'news', id), { status: 'published' });
+      alert('Post published successfully!');
+    } catch (err) {
+      alert('Error approving post: ' + err.message);
+    }
+  };
+
+  const handleReject = async (id) => {
+    if (!window.confirm('Reject this post? It will be sent back to Drafts.')) return;
+    try {
+      await updateDoc(doc(db, 'news', id), { status: 'draft' });
+    } catch (err) {
+      alert('Error rejecting post: ' + err.message);
+    }
+  };
+
+  return (
+    <div className="p-8">
+      <div className="mb-8">
+        <h2 className="text-3xl font-extrabold tracking-tighter text-primary">Review Posts</h2>
+        <p className="text-on-surface-variant text-sm mt-1">Pending submissions from your institution's editors.</p>
+      </div>
+
+      {loading ? (
+        <p>Loading pending posts...</p>
+      ) : pendingPosts.length === 0 ? (
+        <div className="bg-surface p-10 rounded-2xl border border-outline-variant/20 text-center text-on-surface-variant">
+          No pending posts to review.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {pendingPosts.map(post => (
+            <div key={post.id} className="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden flex flex-col">
+              {post.imageUrl && (
+                <img src={post.imageUrl} alt="Cover" className="w-full h-40 object-cover object-top" />
+              )}
+              <div className="p-4 flex-1 flex flex-col">
+                <span className="text-[10px] font-bold text-primary uppercase bg-primary/10 w-max px-2 py-0.5 rounded-full mb-2">{post.category}</span>
+                <h3 className="font-bold text-lg mb-2">{post.title}</h3>
+                <p className="text-xs text-on-surface-variant mb-4 flex-1">By Editor: {post.authorName}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => handleApprove(post.id)} className="flex-1 bg-primary text-on-primary py-2 rounded-xl text-xs font-bold hover:bg-primary/90">Publish</button>
+                  <button onClick={() => navigate('/admin/new-post', { state: { editPostId: post.id } })} className="flex-1 bg-secondary-container text-on-secondary-container py-2 rounded-xl text-xs font-bold hover:bg-secondary-container/80">Edit</button>
+                  <button onClick={() => handleReject(post.id)} className="flex-1 bg-error-container text-on-error-container py-2 rounded-xl text-xs font-bold hover:bg-error-container/80">Reject</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const AdminPortal = () => {
   const { userProfile, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const location = useLocation();
+  const activeTab = location.pathname.split('/')[2] || 'dashboard';
   const [selectedStudentSlug, setSelectedStudentSlug] = useState(null);
   
   const handleLogout = async () => {
@@ -886,10 +985,10 @@ export const AdminPortal = () => {
  
   const handleEditStudent = (slug) => {
     setSelectedStudentSlug(slug);
-    setActiveTab('student-edit');
+    navigate('/admin/student-edit');
   };
  
-  const isEditor = activeTab === 'new-post' || activeTab === 'student-edit';
+  const isEditor = activeTab === 'new-post' || activeTab === 'student-edit' || activeTab === 'new-event';
  
   return (
     <div className="bg-surface font-body text-on-surface min-h-screen">
@@ -897,22 +996,16 @@ export const AdminPortal = () => {
       <nav className="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="flex justify-between items-center px-8 h-16 w-full max-w-[1920px] mx-auto font-manrope tracking-tight">
           <div className="text-xl font-bold tracking-tighter text-primary">Smart League</div>
-          <div className="hidden md:flex items-center space-x-8">
-            <button onClick={() => setActiveTab('dashboard')} className={`font-semibold pb-1 transition-colors ${activeTab === 'dashboard' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-primary'}`}>Overview</button>
-            <button onClick={() => setActiveTab('published')} className={`font-semibold pb-1 transition-colors ${activeTab === 'published' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-primary'}`}>Newsroom</button>
-            {(userProfile?.role === 'admin' || userProfile?.role === 'management') && (
-              <button onClick={() => setActiveTab('staff')} className={`font-semibold pb-1 transition-colors ${activeTab === 'staff' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-primary'}`}>Staff</button>
-            )}
-            <button onClick={() => setActiveTab('students')} className={`font-semibold pb-1 transition-colors ${activeTab === 'students' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-primary'}`}>Students</button>
-          </div>
+          
           <div className="flex items-center space-x-4">
             <div className="flex space-x-2">
               <button className="p-2 hover:bg-surface-container-high rounded-lg transition-all">
                 <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
               </button>
             </div>
-            <button onClick={() => setActiveTab('new-post')} className="bg-primary text-on-primary px-6 py-2 rounded-full font-semibold transition-all hover:opacity-90 active:scale-95 text-sm">
-              Publish News
+            <button onClick={() => navigate('/admin/new-post')} className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded-full font-bold transition-all hover:opacity-90 active:scale-95 text-sm flex items-center justify-center space-x-2">
+              <span className="material-symbols-outlined text-sm">add_circle</span>
+              <span>Create Post</span>
             </button>
             <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs uppercase">
               {userProfile?.displayName?.charAt(0) || 'U'}
@@ -930,13 +1023,15 @@ export const AdminPortal = () => {
                 <span className="material-symbols-outlined text-white" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-primary leading-tight">Admin Portal</h2>
-                <p className="text-xs text-slate-500 font-inter">{userProfile?.institution || 'Institution'}</p>
+                <h2 className="text-lg font-bold text-primary leading-tight">{userProfile?.institution || 'Institution'}</h2>
+                <p className="text-xs text-slate-500 font-inter">Admin Portal</p>
               </div>
             </div>
             <nav className="space-y-1">
               {[
                 { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
+                { id: 'review', icon: 'rate_review', label: 'Review Posts', adminOnly: true },
+                { id: 'new-event', icon: 'event', label: 'Post Event' },
                 { id: 'drafts', icon: 'edit_note', label: 'Drafts' },
                 { id: 'published', icon: 'auto_stories', label: 'Published' },
                 { id: 'staff', icon: 'badge', label: 'Staff Management', managementOnly: true },
@@ -944,21 +1039,16 @@ export const AdminPortal = () => {
                 { id: 'analytics', icon: 'analytics', label: 'Analytics' },
               ].map(item => {
                 if (item.managementOnly && userProfile?.role !== 'management' && userProfile?.role !== 'teacher') return null;
+                if (item.adminOnly && userProfile?.role !== 'management' && userProfile?.role !== 'administrator') return null;
                 const isActive = activeTab === item.id;
                 return (
-                  <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center space-x-3 pl-6 py-3 transition-all ${isActive ? 'bg-primary-fixed text-on-primary-fixed rounded-r-full mr-4' : 'text-slate-600 hover:bg-surface-container-high hover:translate-x-1'}`}>
+                  <button key={item.id} onClick={() => navigate(`/admin/${item.id}`)} className={`w-full flex items-center space-x-3 pl-6 py-3 transition-all ${isActive ? 'bg-primary-fixed text-on-primary-fixed rounded-r-full mr-4' : 'text-slate-600 hover:bg-surface-container-high hover:translate-x-1'}`}>
                     <span className="material-symbols-outlined">{item.icon}</span>
                     <span className="font-inter text-sm font-medium">{item.label}</span>
                   </button>
                 );
               })}
             </nav>
-            <div className="mt-8 px-6">
-              <button onClick={() => setActiveTab('new-post')} className="w-full bg-secondary-container text-on-secondary-container font-bold py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center space-x-2">
-                <span className="material-symbols-outlined text-sm">add_circle</span>
-                <span>Create New Draft</span>
-              </button>
-            </div>
           </div>
           <div className="mt-auto p-6 space-y-1">
             <button onClick={handleLogout} className="w-full flex items-center space-x-3 text-error pl-6 py-3 hover:bg-error-container/20 transition-all">
@@ -972,16 +1062,18 @@ export const AdminPortal = () => {
       {/* Main Content Area */}
       <main className={`${!isEditor ? 'lg:ml-64' : ''} pt-16 min-h-screen`}>
         {activeTab === 'dashboard' && <DashboardView institution={userProfile?.institution} />}
+        {activeTab === 'review' && <ReviewPostsView institution={userProfile?.institution} />}
         {activeTab === 'students' && <StudentsView institution={userProfile?.institution} onEdit={handleEditStudent} />}
         {activeTab === 'drafts' && <DraftsView institution={userProfile?.institution} />}
         {activeTab === 'published' && <PublishedView institution={userProfile?.institution} />}
         {activeTab === 'staff' && <StaffView />}
         {activeTab === 'analytics' && <AnalyticsView institution={userProfile?.institution} />}
-        {activeTab === 'new-post' && <AdminNewsEditor onBack={() => setActiveTab('dashboard')} />}
+        {activeTab === 'new-post' && <AdminNewsEditor onBack={() => navigate('/admin/dashboard')} />}
+        { activeTab === 'new-event' && <AdminEventEditor onBack={() => navigate('/admin/dashboard')} /> }
         {activeTab === 'student-edit' && (
           <AdminStudentEdit 
             slug={selectedStudentSlug} 
-            onBack={() => setActiveTab('students')} 
+            onBack={() => navigate('/admin/students')} 
           />
         )}
       </main>
