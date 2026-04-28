@@ -174,7 +174,7 @@ const AppRoutes = () => (
     <Route path="/make-me-admin" element={<MakeMeAdmin />} />
 
     {/* ── PUBLIC/STUDENT ROUTES ── */}
-    <Route path="/feed" element={<HomeFeed />} />
+    <Route path="/feed" element={<Navigate to="/explore" replace />} />
     <Route path="/explore" element={<ExploreAchievements />} />
     <Route path="/events" element={<EventsPage />} />
     <Route path="/category/:categoryName" element={<CategoryNewsPage />} />
