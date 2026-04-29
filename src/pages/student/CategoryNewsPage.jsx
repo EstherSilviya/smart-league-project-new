@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../../firebase/config";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 // ── Category config — colors & icons matching your existing design ──
 const CATEGORY_CONFIG = {
@@ -158,7 +158,12 @@ export const CategoryNewsPage = () => {
     const fetchNews = async () => {
       setLoading(true);
       try {
-        const snapshot = await getDocs(collection(db, "news"));
+        // Only fetch published posts — public users can't read drafts/pending
+        const q = query(
+          collection(db, "news"),
+          where("status", "==", "published")
+        );
+        const snapshot = await getDocs(q);
         const data = snapshot.docs.map(doc => {
           const d = doc.data();
           return {
@@ -169,10 +174,13 @@ export const CategoryNewsPage = () => {
           };
         });
 
-        const filtered = data.filter(item =>
-          item.category === categoryName?.trim().toLowerCase() &&
-          item.status === "published"
-        );
+        const filtered = data
+          .filter(item => item.category === categoryName?.trim().toLowerCase())
+          .sort((a, b) => {
+            const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime());
+            const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime());
+            return tB - tA; // newest first → shows as big blue hero card
+          });
 
         setNewsList(filtered);
       } catch (err) {
