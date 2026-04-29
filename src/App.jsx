@@ -8,6 +8,7 @@ import { db } from './firebase/config';
 
 // Auth
 import { Login, Signup, ForgotPassword } from './pages/auth/Auth';
+import { ForcePasswordReset } from './pages/auth/ForcePasswordReset';
 
 // Student
 import { HomeFeed } from './pages/student/HomeFeed';
@@ -116,14 +117,28 @@ const RootRedirect = () => {
   useEffect(() => {
     if (loading) return;
     if (!currentUser) { navigate('/login', { replace: true }); return; }
-    if (!userProfile) return; // wait for profile to load
+    
+    // If we have a user but no profile after 5 seconds, something is wrong
+    const timeout = setTimeout(() => {
+      if (!userProfile) {
+        console.error("Profile load timeout");
+        navigate('/login', { replace: true });
+      }
+    }, 5000);
 
-    if (userProfile.status === 'pending') {
-      navigate('/pending-approval', { replace: true });
+    if (!userProfile) return () => clearTimeout(timeout);
+
+    clearTimeout(timeout);
+
+    if (userProfile.requiresPasswordReset) {
+      navigate('/force-password-reset', { replace: true });
       return;
     }
-
-    if (userProfile.role === 'admin') {
+    
+    // ... remaining logic ...
+    if (userProfile.status === 'pending') {
+      navigate('/pending-approval', { replace: true });
+    } else if (userProfile.role === 'admin') {
       navigate('/super-admin', { replace: true });
     } else if (userProfile.role === 'management' || userProfile.role === 'teacher') {
       navigate('/admin', { replace: true });
@@ -166,6 +181,11 @@ const AppRoutes = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/signup" element={<Signup />} />
     <Route path="/forgot-password" element={<ForgotPassword />} />
+    <Route path="/force-password-reset" element={
+      <ProtectedRoute>
+        <ForcePasswordReset />
+      </ProtectedRoute>
+    } />
     <Route path="/unauthorized" element={<Unauthorized />} />
 
     {/* Root → role-based redirect */}

@@ -38,7 +38,15 @@ export const getAllUsers = async (role = null) => {
   });
 };
 
-export const getStudents = () => getAllUsers('student');
+export const getStudents = async () => {
+  const snap = await getDocs(query(collection(db, 'students')));
+  const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return data.sort((a, b) => {
+    const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime());
+    const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime());
+    return tB - tA;
+  });
+};
 export const getTeachers = () => getAllUsers('teacher');
 
 export const createStudent = async (data) => {
@@ -195,7 +203,7 @@ export const getCriteriaList = async () => {
 
 // ─── REAL-TIME LISTENERS ──────────────────────────────────────────────────────
 export const listenToAchievements = (callback, filters = {}) => {
-  let constraints = [limit(20)];
+  let constraints = [where('status', '==', 'published'), limit(20)];
   if (filters.studentId) constraints.push(where('studentId', '==', filters.studentId));
   return onSnapshot(query(collection(db, 'achievements'), ...constraints), (snap) => {
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));

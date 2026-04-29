@@ -1,6 +1,6 @@
 // src/pages/auth/Login.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const Login = () => {
@@ -11,9 +11,19 @@ export const Login = () => {
   const { login, userProfile, currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const from = location.state?.from?.pathname;
+  const resetSuccess = searchParams.get('resetSuccess');
+  const prefillEmail = searchParams.get('email');
+
+  useEffect(() => {
+    if (prefillEmail) setEmail(prefillEmail);
+  }, [prefillEmail]);
 
   const handleRedirect = (profile) => {
+    if (profile.requiresPasswordReset) {
+      return navigate('/force-password-reset');
+    }
     if (profile.role === 'admin') return navigate('/super-admin');
     if (['management', 'teacher', 'editor', 'administrator'].includes(profile.role)) {
       if (profile.status === 'pending') {
@@ -27,27 +37,74 @@ export const Login = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const urlEmail = params.get('email');
-    const urlPass = params.get('password');
-    if (urlEmail && urlPass) {
-      setEmail(urlEmail);
-      setPassword(urlPass);
-      // Auto trigger login
-      const autoLogin = async () => {
+    const inviteToken = params.get('inviteToken');
+    const legacyEmail = params.get('email');
+    const legacyPass = params.get('password');
+
+    if (inviteToken) {
+      const handleTokenLogin = async () => {
         setLoading(true);
+        setError('');
         try {
-          const cred = await login(urlEmail, urlPass);
-          const { getUserProfile } = await import('../../firebase/firestore');
-          const profile = await getUserProfile(cred.user.uid);
-          if (profile) handleRedirect(profile);
-          else navigate(from || '/');
+          const { doc, getDoc, deleteDoc } = await import('firebase/firestore');
+          const { db } = await import('../../firebase/config');
+          
+          const tokenRef = doc(db, 'tempInviteTokens', inviteToken);
+          const tokenSnap = await getDoc(tokenRef);
+
+          if (tokenSnap.exists()) {
+            const { email: tokenEmail, password: tokenPass, expiresAt } = tokenSnap.data();
+            
+            if (expiresAt.toMillis() < Date.now()) {
+              setError('Invite token has expired. Please ask for a new invite.');
+            } else {
+              const cred = await login(tokenEmail, tokenPass);
+              const { getUserProfile } = await import('../../firebase/firestore');
+              let profile = null;
+              try {
+                profile = await getUserProfile(cred.user.uid);
+              } catch (pErr) {
+                console.warn("Profile fetch failed during token login:", pErr);
+              }
+              
+              await deleteDoc(tokenRef);
+              
+              if (profile) handleRedirect(profile);
+              else navigate(from || '/');
+            }
+          } else {
+            setError('Invalid or already used invite token. Try logging in manually.');
+          }
         } catch (err) {
-          console.error("Auto-login Error:", err);
-          setError('Auto-login failed. Please sign in manually.');
+          console.error("Token login error:", err);
+          setError(`Auto-login failed: ${err.message || 'Unknown error'}. Please sign in manually.`);
         }
         setLoading(false);
       };
-      autoLogin();
+      handleTokenLogin();
+    } else if (legacyEmail && legacyPass) {
+      const handleLegacyLogin = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const cred = await login(legacyEmail, legacyPass);
+          const { getUserProfile } = await import('../../firebase/firestore');
+          let profile = null;
+          try {
+            profile = await getUserProfile(cred.user.uid);
+          } catch (pErr) {
+            console.warn("Profile fetch failed, continuing with auth user only:", pErr);
+          }
+          
+          if (profile) handleRedirect(profile);
+          else navigate(from || '/');
+        } catch (err) {
+          console.error("Legacy login error:", err);
+          setError(`Auto-login failed: ${err.message || 'User account not found'}. Please sign in manually.`);
+        }
+        setLoading(false);
+      };
+      handleLegacyLogin();
     }
   }, [location.search]);
 
@@ -58,7 +115,13 @@ export const Login = () => {
     try {
       const cred = await login(email, password);
       const { getUserProfile } = await import('../../firebase/firestore');
-      const profile = await getUserProfile(cred.user.uid);
+      let profile = null;
+      try {
+        profile = await getUserProfile(cred.user.uid);
+      } catch (pErr) {
+        console.warn("Profile fetch failed during manual login:", pErr);
+      }
+      
       if (profile) handleRedirect(profile);
       else navigate(from || '/');
     } catch (err) {
@@ -138,6 +201,13 @@ export const Login = () => {
 
           <h2 className="font-headline text-3xl font-extrabold text-primary tracking-tight mb-1">Welcome back</h2>
           <p className="text-on-surface-variant text-sm mb-8">Sign in to your account to continue.</p>
+
+          {resetSuccess && (
+            <div className="mb-6 p-4 bg-green-50 rounded-xl text-green-800 text-sm font-medium flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">check_circle</span>
+              Password reset successful. Please sign in with your new password.
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-4 bg-error-container rounded-xl text-error text-sm font-medium flex items-center gap-2">

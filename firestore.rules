@@ -2,76 +2,40 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ==========================================
-    // HELPER FUNCTIONS FOR BACKEND AUTHORIZATION
-    // ==========================================
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Securely checks the user's role directly from the database, 
-    // impossible to bypass from the frontend.
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-    
-    function hasRole(roles) {
-      return isAuthenticated() && (getUserRole() in roles);
-    }
-
-    // ==========================================
-    // RULES BY COLLECTION
-    // ==========================================
-
-    // Users Collection
-    match /users/{userId} {
-      allow read: if true; // Public profiles (authors, etc)
-      // Users can edit themselves, Super Admins can manage all
-      allow update: if isAuthenticated() && (request.auth.uid == userId || hasRole(['admin']));
-      allow create, delete: if hasRole(['admin']);
-    }
-
-    // News (Posts) Collection
-    match /news/{postId} {
-      // Public can only read published posts. Staff can read all (drafts, pending).
-      allow read: if resource.data.status == 'published' || hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']);
-      
-      // Staff can create new posts
-      allow create: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']);
-      
-      // Staff can update posts (e.g. Editors editing drafts, Admins approving)
-      allow update: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']);
-      
-      // Only high-level admins can delete
-      allow delete: if hasRole(['administrator', 'admin']);
-    }
-
-    // Students Collection
-    match /students/{studentId} {
-      allow read: if true; // Public portfolios
-      // Staff can add/edit students
-      allow create, update: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']);
-      // Only high-level admins can delete
-      allow delete: if hasRole(['administrator', 'admin']);
-    }
-
-    // Invites Collection
-    match /invites/{inviteId} {
-      allow read: if true; // Needed for signup page verification
-      allow update: if true; // Needed to mark invite as 'completed'
-      allow create, delete: if hasRole(['admin', 'management']);
-    }
-
-    // Events Collection
-    match /events/{eventId} {
-      allow read: if true; // Public can view events
-      // Staff can manage events
-      allow create, update, delete: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']);
-    }
-
-    // Default Deny Fallback
+    // ─── GLOBAL READ ACCESS (To fix permission errors) ───
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if true;
+    }
+
+    // ─── HELPER FUNCTIONS ───
+    function isAuthenticated() { return request.auth != null; }
+    function hasRole(roles) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in roles;
+    }
+
+    // ─── WRITE RULES ───
+    match /users/{userId} {
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (request.auth.uid == userId || hasRole(['admin', 'management', 'administrator']));
+      allow delete: if hasRole(['admin', 'management', 'administrator']);
+    }
+
+    match /students/{id} { allow write: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']); }
+    match /news/{id} { allow write: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']); }
+    match /achievements/{id} { allow write: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']); }
+    match /events/{id} { allow write: if hasRole(['editor', 'management', 'administrator', 'admin', 'teacher']); }
+    match /achievementCriteria/{id} { allow write: if hasRole(['management', 'administrator', 'admin']); }
+    
+    match /invites/{id} {
+      allow update: if true;
+      allow create, delete: if hasRole(['management', 'administrator', 'admin']);
+    }
+
+    match /tempInviteTokens/{id} {
+      allow delete: if true;
+      allow create: if hasRole(['management', 'administrator', 'admin']);
     }
   }
 }

@@ -314,8 +314,18 @@ export const AdminNewsEditor = ({ onBack }) => {
                         type="text" 
                         value={student.name}
                         onChange={(e) => {
+                          const val = e.target.value;
                           const newStudents = [...form.students];
-                          newStudents[idx].name = e.target.value;
+                          newStudents[idx] = { ...newStudents[idx], name: val };
+                          
+                          const normalize = str => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
+                          const searchVal = normalize(val);
+                          const exactMatch = availableStudents.find(s => normalize(s.name) === searchVal);
+                          if (exactMatch) {
+                            newStudents[idx].courseYear = exactMatch.courseYear || '';
+                            newStudents[idx].rollNo = exactMatch.rollNo || '';
+                          }
+                          
                           setForm(prev => ({ ...prev, students: newStudents }));
                           setActiveDropdown(idx);
                         }}
@@ -325,15 +335,20 @@ export const AdminNewsEditor = ({ onBack }) => {
                         autoComplete="off"
                       />
                       {activeDropdown === idx && student.name.length > 1 && (() => {
-                        const matches = availableStudents.filter(s => s.name.toLowerCase().includes(student.name.toLowerCase()));
-                        const exactMatch = matches.some(s => s.name.toLowerCase() === student.name.toLowerCase());
+                        const normalize = str => (str || '').trim().toLowerCase().replace(/\s+/g, ' ');
+                        const searchVal = normalize(student.name);
+                        
+                        const matches = availableStudents.filter(s => normalize(s.name).includes(searchVal));
+                        const exactMatch = matches.some(s => normalize(s.name) === searchVal);
+                        
                         return (
                           <div className="absolute z-50 w-full mt-1 bg-white border border-outline-variant/20 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
                             {matches.map((s) => (
                               <div 
                                 key={s.id} 
                                 className="px-4 py-3 hover:bg-surface-container-low cursor-pointer border-b border-outline-variant/10 flex flex-col"
-                                onClick={() => {
+                                onMouseDown={(e) => {
+                                  e.preventDefault(); // Prevent input blur
                                   const newStudents = [...form.students];
                                   newStudents[idx] = { ...newStudents[idx], name: s.name, courseYear: s.courseYear || '', rollNo: s.rollNo || '' };
                                   setForm(prev => ({ ...prev, students: newStudents }));
@@ -347,7 +362,10 @@ export const AdminNewsEditor = ({ onBack }) => {
                             {!exactMatch && (
                               <div 
                                 className="px-4 py-3 bg-secondary-container/10 hover:bg-secondary-container/30 cursor-pointer text-secondary flex items-center gap-2"
-                                onClick={() => setActiveDropdown(null)}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setActiveDropdown(null);
+                                }}
                               >
                                 <span className="material-symbols-outlined text-sm">person_add</span>
                                 <span className="font-bold text-sm">Add "{student.name}" as new student</span>
