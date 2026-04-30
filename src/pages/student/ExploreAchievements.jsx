@@ -473,7 +473,7 @@ export const ExploreAchievements = () => {
           {heroItem ? (
             <div
               onClick={() => navigate(`/achievement/${heroItem.postSlug || heroItem.id}`)}
-              className="relative w-full rounded-[2rem] overflow-hidden bg-primary aspect-[21/9] md:aspect-[21/7] cursor-pointer group shadow-2xl shadow-primary/10"
+              className="relative w-full rounded-[2rem] overflow-hidden bg-primary aspect-[4/5] sm:aspect-[21/9] md:aspect-[21/7] cursor-pointer group shadow-2xl shadow-primary/10"
             >
               {heroItem.imageUrl || heroItem.imageURL ? (
                 <img
@@ -484,8 +484,8 @@ export const ExploreAchievements = () => {
               ) : (
                 <div className="absolute inset-0 bg-primary-container opacity-20"></div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/40 to-transparent"></div>
-              <div className="relative h-full flex flex-col justify-center px-8 md:px-16 max-w-2xl space-y-4">
+              <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-primary via-primary/40 to-transparent"></div>
+              <div className="relative h-full flex flex-col justify-end sm:justify-center p-6 sm:px-8 md:px-16 max-w-2xl space-y-3 sm:space-y-4">
                 <span className="bg-secondary-container text-on-secondary-container px-4 py-1 rounded-sm text-xs font-bold uppercase tracking-wider font-inter w-fit">
                   Trending: {heroItem.category || 'Global Excellence'}
                 </span>
@@ -752,33 +752,7 @@ export const ExploreAchievements = () => {
         </section>
  
       </main>
- 
-      {/* ── Bottom Nav ── */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-surface-container-highest/80 backdrop-blur-xl z-50 rounded-t-3xl border-t border-outline-variant/30 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
-        <Link to="/explore" className="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full px-5 py-2 scale-110 active:scale-90 duration-200 shadow-lg shadow-primary/20">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>explore</span>
-          <span className="text-[11px] font-medium tracking-tight font-inter mt-0.5">Explore</span>
-        </Link>
- 
-        <Link to="/events" className="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined">calendar_month</span>
-          <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Events</span>
-        </Link>
- 
-        {/* ✅ FIXED: Activity icon now shows Instagram-style unread badge */}
-        <Link to="/Activity" className="relative flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
-          {unreadCount > 0 && (
-            <span
-              className="absolute -top-0.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center leading-none badge-pop"
-              style={{ boxShadow: '0 0 0 2px white' }}
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Activity</span>
-        </Link>
-      </nav>
+
     </div>
   );
 };

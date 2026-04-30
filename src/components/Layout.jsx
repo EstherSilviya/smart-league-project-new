@@ -4,33 +4,43 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // ─── BOTTOM NAV (Mobile - Student/Teacher) ───────────────────────────────────
+// ─── BOTTOM NAV (Mobile - Student) ───────────────────────────────────────────
 export const BottomNav = () => {
   const location = useLocation();
-  const { isAdmin } = useAuth();
-  if (isAdmin) return null;
+  const { userProfile, unreadCount } = useAuth();
+  
+  if (userProfile?.role === 'admin' || userProfile?.role === 'management') return null;
 
   const links = [
-    { to: '/feed', icon: 'home', label: 'Home' },
-    { to: '/explore', icon: 'emoji_events', label: 'Leagues' },
-    { to: '/network', icon: 'people', label: 'Network' },
-    { to: '/profile', icon: 'account_circle', label: 'Profile' },
+    { to: '/explore', icon: 'explore', label: 'Explore' },
+    { to: '/events', icon: 'calendar_month', label: 'Events' },
+    { to: '/activity', icon: 'notifications', label: 'Activity', badge: unreadCount },
+    { to: `/profile/${userProfile?.slug || 'me'}`, icon: 'account_circle', label: 'Profile' },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav border-t border-outline-variant/20 pb-safe">
-      <div className="flex gap-2 px-4 pb-3 pt-2">
-        {links.map(({ to, icon, label }) => {
-          const active = location.pathname.startsWith(to);
-          return (
-            <Link key={to} to={to} className={`flex flex-1 flex-col items-center justify-end gap-1 rounded-full ${active ? 'text-primary' : 'text-on-surface-variant/60'}`}>
-              <div className="flex h-8 items-center justify-center">
-                <span className="material-symbols-outlined" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
-              </div>
-              <p className={`text-xs leading-normal tracking-[0.015em] ${active ? 'font-bold' : 'font-medium'}`}>{label}</p>
-            </Link>
-          );
-        })}
-      </div>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-outline-variant/10 pb-safe lg:hidden flex justify-around items-center px-4 py-3 rounded-t-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      {links.map(({ to, icon, label, badge }) => {
+        const active = location.pathname.startsWith(to);
+        return (
+          <Link 
+            key={to} 
+            to={to} 
+            className={`relative flex flex-col items-center justify-center gap-1 px-4 py-1 transition-all duration-300 ${active ? 'text-primary' : 'text-on-surface-variant/60'}`}
+          >
+            {active && (
+              <div className="absolute -top-3 w-1.5 h-1.5 rounded-full bg-primary" />
+            )}
+            <span className="material-symbols-outlined text-[24px]" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
+            <p className={`text-[10px] font-bold tracking-tight ${active ? 'opacity-100' : 'opacity-60'}`}>{label}</p>
+            {badge > 0 && (
+              <span className="absolute top-0.5 right-3 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 text-white text-[9px] font-black rounded-full ring-2 ring-white">
+                {badge > 9 ? '9+' : badge}
+              </span>
+            )}
+          </Link>
+        );
+      })}
     </nav>
   );
 };
@@ -78,6 +88,75 @@ export const MobileTopBar = ({ title, showSearch, showBack }) => {
         </div>
       )}
     </header>
+  );
+};
+
+// ─── ADMIN SIDEBAR ────────────────────────────────────────────────────────────
+// ─── STUDENT SIDEBAR (Desktop) ────────────────────────────────────────────────
+export const StudentSidebar = () => {
+  const location = useLocation();
+  const { userProfile, logout, unreadCount } = useAuth();
+
+  const links = [
+    { to: '/explore', icon: 'explore', label: 'Explore Feed' },
+    { to: '/events', icon: 'calendar_month', label: 'Upcoming Events' },
+    { to: '/activity', icon: 'notifications', label: 'Recent Activity', badge: unreadCount },
+    { to: `/profile/${userProfile?.slug || 'me'}`, icon: 'account_circle', label: 'My Portfolio' },
+  ];
+
+  return (
+    <aside className="fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-outline-variant/10 hidden lg:flex flex-col p-6 z-40">
+      <div className="flex items-center gap-3 mb-10 px-2">
+        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+          <span className="material-symbols-outlined text-on-primary">star</span>
+        </div>
+        <span className="text-lg font-black text-primary uppercase tracking-tighter">Smart League</span>
+      </div>
+
+      <nav className="flex-1 space-y-2">
+        {links.map(({ to, icon, label, badge }) => {
+          const active = location.pathname.startsWith(to);
+          return (
+            <Link 
+              key={to} 
+              to={to} 
+              className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 group ${active ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:bg-surface-container'}`}
+            >
+              <span className="material-symbols-outlined group-hover:scale-110 transition-transform" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
+              <span className={`font-bold text-sm ${active ? 'opacity-100' : 'opacity-70'}`}>{label}</span>
+              {badge > 0 && (
+                <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded-full ${active ? 'bg-white text-primary' : 'bg-red-500 text-white'}`}>
+                  {badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mt-auto space-y-4">
+        {userProfile && (
+          <div className="bg-surface-container-low p-4 rounded-[1.5rem] flex items-center gap-3 border border-outline-variant/10">
+            <img 
+              src={userProfile.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.displayName || 'U')}`}
+              alt="Profile"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10"
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-bold truncate">{userProfile.displayName}</p>
+              <p className="text-[10px] uppercase font-black text-primary opacity-60 tracking-widest">Student</p>
+            </div>
+          </div>
+        )}
+        <button 
+          onClick={logout}
+          className="flex items-center gap-4 px-4 py-3 rounded-2xl w-full text-on-surface-variant hover:bg-error/10 hover:text-error transition-all font-bold text-sm"
+        >
+          <span className="material-symbols-outlined">logout</span>
+          Sign Out
+        </button>
+      </div>
+    </aside>
   );
 };
 
@@ -208,6 +287,21 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (loading || !currentUser) return <LoadingScreen />;
   return children;
+};
+
+// ─── STUDENT LAYOUT ───────────────────────────────────────────────────────────
+export const StudentLayout = ({ children }) => {
+  return (
+    <div className="min-h-screen bg-surface">
+      <StudentSidebar />
+      <div className="lg:pl-72 min-h-screen flex flex-col">
+        <main className="flex-1 pb-24 lg:pb-0">
+          {children}
+        </main>
+        <BottomNav />
+      </div>
+    </div>
+  );
 };
 
 export const LoadingScreen = () => (

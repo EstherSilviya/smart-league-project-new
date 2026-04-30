@@ -87,8 +87,8 @@ export const StudentProfile = () => {
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20 items-end">
           <div className="lg:col-span-7">
             <span className="label-md text-xs font-black uppercase tracking-[0.3em] text-on-tertiary-container mb-4 block">Distinguished Scholar</span>
-            <h2 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tight text-primary leading-none mb-6">
-              {student.name.split(' ')[0]} <br/>
+            <h2 className="font-headline text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-primary leading-none mb-6">
+              {student.name.split(' ')[0]} <br className="hidden sm:block"/>
               <span className="text-on-primary-container">{student.name.split(' ').slice(1).join(' ')}</span>
             </h2>
             <div className="flex flex-wrap gap-4 items-center">
@@ -102,17 +102,17 @@ export const StudentProfile = () => {
               </span>
             </div>
           </div>
-          <div className="lg:col-span-5 relative">
-            <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-surface-container-highest transform rotate-2 shadow-2xl transition-transform hover:rotate-0 duration-700">
+          <div className="lg:col-span-5 relative mt-8 lg:mt-0 px-4 sm:px-0">
+            <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-surface-container-highest transform rotate-2 sm:rotate-2 shadow-2xl transition-transform hover:rotate-0 duration-700">
               <img 
                 alt={student.name} 
                 className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" 
                 src={student.imageUrl || student.image || 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80'} 
               />
             </div>
-            <div className="absolute -bottom-6 -left-6 bg-secondary-container p-8 rounded-2xl shadow-xl max-w-[220px] border border-white/20">
-              <p className="font-headline text-4xl font-black text-on-secondary-fixed">GPA {student.gpa || '4.0'}</p>
-              <p className="text-[10px] uppercase tracking-[0.2em] font-black text-on-secondary-fixed-variant mt-1">Summa Cum Laude</p>
+            <div className="absolute -bottom-4 -left-2 sm:-bottom-6 sm:-left-6 bg-secondary-container p-4 sm:p-8 rounded-2xl shadow-xl max-w-[160px] sm:max-w-[220px] border border-white/20">
+              <p className="font-headline text-2xl sm:text-4xl font-black text-on-secondary-fixed">GPA {student.gpa || '4.0'}</p>
+              <p className="text-[8px] sm:text-[10px] uppercase tracking-[0.2em] font-black text-on-secondary-fixed-variant mt-1">Summa Cum Laude</p>
             </div>
           </div>
         </section>
@@ -212,25 +212,6 @@ export const StudentProfile = () => {
         </section>
       </main>
 
-      {/* Bottom Navigation for Mobile */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-xl z-50 rounded-t-[2.5rem] shadow-2xl border-t border-outline-variant/10 md:hidden">
-        <Link to="/feed" className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
-          <span className="material-symbols-outlined">auto_awesome</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Home</span>
-        </Link>
-        <Link to="/explore" className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
-          <span className="material-symbols-outlined">explore</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Explore</span>
-        </Link>
-        <div className="flex flex-col items-center justify-center bg-blue-900 text-white rounded-full px-6 py-2 scale-110 shadow-lg shadow-blue-900/20">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Portfolio</span>
-        </div>
-        <Link to="/notifications" className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Activity</span>
-        </Link>
-      </nav>
     </div>
   );
 };

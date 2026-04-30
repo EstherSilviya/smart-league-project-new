@@ -130,27 +130,10 @@ export const EventsPage = () => {
           className="slide-up mt-5 rounded-[2rem] overflow-hidden relative w-full"
           style={{
             background: 'linear-gradient(135deg, #0f2951 0%, #1a3a6e 55%, #0d3d2e 100%)',
-            minHeight: '200px',
           }}
         >
-          <div
-            className="absolute -top-8 -right-8 w-56 h-56 rounded-full opacity-10"
-            style={{ background: 'radial-gradient(circle, #F59E0B, transparent)' }}
-          />
-          <div
-            className="absolute -bottom-6 -left-6 w-44 h-44 rounded-full opacity-10"
-            style={{ background: 'radial-gradient(circle, #34D399, transparent)' }}
-          />
-          <div
-            className="absolute inset-0 opacity-5"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(0deg,transparent,transparent 30px,#fff 30px,#fff 31px),repeating-linear-gradient(90deg,transparent,transparent 30px,#fff 30px,#fff 31px)',
-            }}
-          />
-
-          <div className="relative z-10 p-8">
-            <div className="flex items-start justify-between">
+          <div className="relative z-10 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white/70 text-[10px] font-semibold uppercase tracking-widest mb-3">
                   <span className="material-symbols-outlined text-[13px]">event</span>
@@ -158,7 +141,7 @@ export const EventsPage = () => {
                 </span>
                 <h2
                   style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, lineHeight: 1.1 }}
-                  className="text-[32px] text-white"
+                  className="text-[28px] sm:text-[32px] text-white"
                 >
                   Upcoming<br />
                   <span style={{ color: '#F59E0B' }}>Events</span>
@@ -167,36 +150,15 @@ export const EventsPage = () => {
                   Discover inter-college events, competitions &amp; workshops.
                 </p>
               </div>
-              <div className="flex flex-col items-center justify-center w-24 h-24 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+              <div className="flex flex-row sm:flex-col items-center justify-center gap-2 px-6 py-4 sm:w-24 sm:h-24 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
                 <span
                   style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, color: '#F59E0B' }}
-                  className="text-4xl leading-none"
+                  className="text-2xl sm:text-4xl leading-none"
                 >
                   {loading ? '–' : events.length}
                 </span>
-                <span className="text-white/50 text-[11px] mt-1 font-medium">Events</span>
+                <span className="text-white/50 text-[11px] font-medium uppercase tracking-tighter">Events</span>
               </div>
-            </div>
-
-            <div className="flex gap-2.5 mt-6 flex-wrap">
-              {[
-                { icon: 'location_on', label: 'Multiple Venues' },
-                { icon: 'school', label: 'All Levels' },
-                { icon: 'trophy', label: 'Prizes & Certs' },
-              ].map((s) => (
-                <span
-                  key={s.label}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/10 text-white/70 text-[12px] font-medium"
-                >
-                  <span
-                    className="material-symbols-outlined text-[14px]"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    {s.icon}
-                  </span>
-                  {s.label}
-                </span>
-              ))}
             </div>
           </div>
         </div>
@@ -324,53 +286,6 @@ export const EventsPage = () => {
         </div>
       </main>
 
-      {/* ── BOTTOM NAV ── */}
-      <nav
-        className="fixed bottom-0 left-0 w-full z-50 px-6 pb-6 pt-3"
-        style={{
-          background: 'linear-gradient(to top, rgba(240,242,248,0.98) 70%, transparent)',
-        }}
-      >
-        <div className="w-full max-w-4xl mx-auto flex justify-around items-center bg-white rounded-[2rem] px-4 py-2 shadow-[0_8px_32px_rgba(15,41,81,0.12)] border border-slate-100">
-          <Link
-            to="/explore"
-            className="flex flex-col items-center justify-center px-6 py-2 text-slate-400 hover:text-[#0f2951] transition-colors"
-          >
-            <span className="material-symbols-outlined text-[22px]">explore</span>
-            <span className="text-[10px] font-semibold mt-0.5">Explore</span>
-          </Link>
-
-          <Link
-            to="/events"
-            className="flex flex-col items-center justify-center px-6 py-2.5 rounded-[1.25rem] text-white active:scale-90 duration-200 shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #0f2951, #1a3a6e)' }}
-          >
-            <span
-              className="material-symbols-outlined text-[22px]"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              event
-            </span>
-            <span className="text-[10px] font-bold mt-0.5">Events</span>
-          </Link>
-
-          <Link
-            to="/activity"
-            className="relative flex flex-col items-center justify-center px-6 py-2 text-slate-400 hover:text-[#0f2951] transition-colors"
-          >
-            {unreadCount > 0 && (
-              <span
-                className="absolute -top-0.5 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center leading-none badge-pop"
-                style={{ boxShadow: '0 0 0 2px white' }}
-              >
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-            <span className="material-symbols-outlined text-[22px]">notifications</span>
-            <span className="text-[10px] font-semibold mt-0.5">Activity</span>
-          </Link>
-        </div>
-      </nav>
     </div>
   );
 };

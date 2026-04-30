@@ -104,8 +104,8 @@ const StudentsView = ({ institution, onEdit }) => {
         </div>
       </div>
  
-      <div className="bg-white rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-white rounded-[2.5rem] border border-outline-variant/10 shadow-sm overflow-hidden overflow-x-auto">
+        <table className="min-w-[800px] w-full text-left border-collapse">
           <thead>
             <tr className="bg-surface-container-low border-b border-outline-variant/10">
               <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-outline">Student Profile</th>
@@ -977,6 +977,7 @@ export const AdminPortal = () => {
   const location = useLocation();
   const activeTab = location.pathname.split('/')[2] || 'dashboard';
   const [selectedStudentSlug, setSelectedStudentSlug] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleLogout = async () => {
     await logout();
@@ -993,70 +994,91 @@ export const AdminPortal = () => {
   return (
     <div className="bg-surface font-body text-on-surface min-h-screen">
       {/* TopNavBar */}
-      <nav className="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
-        <div className="flex justify-between items-center px-8 h-16 w-full max-w-[1920px] mx-auto font-manrope tracking-tight">
-          <div className="text-xl font-bold tracking-tighter text-primary">Smart League</div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex space-x-2">
-              <button className="p-2 hover:bg-surface-container-high rounded-lg transition-all">
-                <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
-              </button>
-            </div>
-            <button onClick={() => navigate('/admin/new-post')} className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded-full font-bold transition-all hover:opacity-90 active:scale-95 text-sm flex items-center justify-center space-x-2">
-              <span className="material-symbols-outlined text-sm">add_circle</span>
-              <span>Create Post</span>
+      <nav className="fixed top-0 w-full z-[60] bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
+        <div className="flex justify-between items-center px-4 md:px-8 h-16 w-full max-w-[1920px] mx-auto font-manrope tracking-tight">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 hover:bg-surface-container-high rounded-lg transition-all"
+            >
+              <span className="material-symbols-outlined text-primary">{isMobileMenuOpen ? 'close' : 'menu'}</span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs uppercase">
+            <div className="text-lg font-bold tracking-tighter text-primary">Smart League</div>
+          </div>
+          
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <button onClick={() => navigate('/admin/new-post')} className="bg-secondary-container text-on-secondary-container px-3 md:px-6 py-2 rounded-full font-bold transition-all hover:opacity-90 active:scale-95 text-xs md:text-sm flex items-center justify-center space-x-2">
+              <span className="material-symbols-outlined text-sm">add_circle</span>
+              <span className="hidden sm:inline">Create Post</span>
+            </button>
+            <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs uppercase shrink-0">
               {userProfile?.displayName?.charAt(0) || 'U'}
             </div>
           </div>
         </div>
       </nav>
  
-      {/* SideNavBar */}
+      {/* SideNavBar & Mobile Overlay */}
       {!isEditor && (
-        <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 pt-16 border-r border-slate-200/50 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-950 z-40">
-          <div className="p-6">
-            <div className="flex items-center space-x-3 mb-8">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-white" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
+        <>
+          {/* Mobile Overlay */}
+          {isMobileMenuOpen && (
+            <div 
+              className="lg:hidden fixed inset-0 bg-black/50 z-[55] backdrop-blur-sm transition-opacity"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
+
+          <aside className={`fixed left-0 top-0 pt-16 h-screen w-64 border-r border-slate-200/50 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-950 z-[56] transition-transform duration-300 transform 
+            ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}>
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-8">
+                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                  <span className="material-symbols-outlined text-white" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-primary leading-tight truncate">{userProfile?.institution || 'Institution'}</h2>
+                  <p className="text-[10px] text-slate-500 font-inter">Admin Portal</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-primary leading-tight">{userProfile?.institution || 'Institution'}</h2>
-                <p className="text-xs text-slate-500 font-inter">Admin Portal</p>
-              </div>
+              <nav className="space-y-1">
+                {[
+                  { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
+                  { id: 'review', icon: 'rate_review', label: 'Review Posts', adminOnly: true },
+                  { id: 'new-event', icon: 'event', label: 'Post Event' },
+                  { id: 'drafts', icon: 'edit_note', label: 'Drafts' },
+                  { id: 'published', icon: 'auto_stories', label: 'Published' },
+                  { id: 'staff', icon: 'badge', label: 'Staff Management', managementOnly: true },
+                  { id: 'students', icon: 'leaderboard', label: 'Students' },
+                  { id: 'analytics', icon: 'analytics', label: 'Analytics' },
+                ].map(item => {
+                  if (item.managementOnly && userProfile?.role !== 'management' && userProfile?.role !== 'teacher') return null;
+                  if (item.adminOnly && userProfile?.role !== 'management' && userProfile?.role !== 'administrator') return null;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button 
+                      key={item.id} 
+                      onClick={() => {
+                        navigate(`/admin/${item.id}`);
+                        setIsMobileMenuOpen(false);
+                      }} 
+                      className={`w-full flex items-center space-x-3 pl-6 py-3 transition-all ${isActive ? 'bg-primary-fixed text-on-primary-fixed rounded-r-full mr-4' : 'text-slate-600 hover:bg-surface-container-high hover:translate-x-1'}`}
+                    >
+                      <span className="material-symbols-outlined">{item.icon}</span>
+                      <span className="font-inter text-sm font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
-            <nav className="space-y-1">
-              {[
-                { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
-                { id: 'review', icon: 'rate_review', label: 'Review Posts', adminOnly: true },
-                { id: 'new-event', icon: 'event', label: 'Post Event' },
-                { id: 'drafts', icon: 'edit_note', label: 'Drafts' },
-                { id: 'published', icon: 'auto_stories', label: 'Published' },
-                { id: 'staff', icon: 'badge', label: 'Staff Management', managementOnly: true },
-                { id: 'students', icon: 'leaderboard', label: 'Students' },
-                { id: 'analytics', icon: 'analytics', label: 'Analytics' },
-              ].map(item => {
-                if (item.managementOnly && userProfile?.role !== 'management' && userProfile?.role !== 'teacher') return null;
-                if (item.adminOnly && userProfile?.role !== 'management' && userProfile?.role !== 'administrator') return null;
-                const isActive = activeTab === item.id;
-                return (
-                  <button key={item.id} onClick={() => navigate(`/admin/${item.id}`)} className={`w-full flex items-center space-x-3 pl-6 py-3 transition-all ${isActive ? 'bg-primary-fixed text-on-primary-fixed rounded-r-full mr-4' : 'text-slate-600 hover:bg-surface-container-high hover:translate-x-1'}`}>
-                    <span className="material-symbols-outlined">{item.icon}</span>
-                    <span className="font-inter text-sm font-medium">{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="mt-auto p-6 space-y-1">
-            <button onClick={handleLogout} className="w-full flex items-center space-x-3 text-error pl-6 py-3 hover:bg-error-container/20 transition-all">
-              <span className="material-symbols-outlined">logout</span>
-              <span className="font-inter text-sm font-medium">Sign Out</span>
-            </button>
-          </div>
-        </aside>
+            <div className="mt-auto p-6 space-y-1">
+              <button onClick={handleLogout} className="w-full flex items-center space-x-3 text-error pl-6 py-3 hover:bg-error-container/20 transition-all">
+                <span className="material-symbols-outlined">logout</span>
+                <span className="font-inter text-sm font-medium">Sign Out</span>
+              </button>
+            </div>
+          </aside>
+        </>
       )}
  
       {/* Main Content Area */}

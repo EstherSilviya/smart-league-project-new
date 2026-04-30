@@ -50,7 +50,7 @@ export const AchievementDetail = () => {
         <span className="material-symbols-outlined text-6xl text-outline mb-4">article_off</span>
         <h1 className="text-2xl font-headline font-extrabold text-primary mb-2">Achievement Not Found</h1>
         <p className="text-on-surface-variant mb-6">The story you're looking for might have been archived or is still pending approval.</p>
-        <Link to="/feed" className="bg-primary text-on-primary px-8 py-3 rounded-full font-bold">Back to Feed</Link>
+        <Link to="/explore" className="bg-primary text-on-primary px-8 py-3 rounded-full font-bold">Back to Explore</Link>
       </div>
     );
   }
@@ -201,8 +201,8 @@ export const AchievementDetail = () => {
               <div className="p-8 text-center bg-primary/5 rounded-[2.5rem] border border-primary/10">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">Smart League Global Access</p>
                 <div className="flex justify-center gap-4 mt-4">
-                  <Link to="/feed" className="text-xs font-bold text-primary hover:underline">Feed</Link>
                   <Link to="/explore" className="text-xs font-bold text-primary hover:underline">Explore</Link>
+                  <Link to="/events" className="text-xs font-bold text-primary hover:underline">Events</Link>
                 </div>
               </div>
             </div>
@@ -210,28 +210,7 @@ export const AchievementDetail = () => {
         </div>
       </main>
 
-      {/* Bottom Navigation for Mobile */}
-      <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-xl z-50 rounded-t-[2.5rem] shadow-2xl border-t border-outline-variant/10 md:hidden">
-        <Link to="/feed" className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
-          <span className="material-symbols-outlined">auto_awesome</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Home</span>
-        </Link>
-        <Link to="/explore" className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
-          <span className="material-symbols-outlined">explore</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Explore</span>
-        </Link>
-        <div className="flex items-center justify-center bg-primary text-white rounded-full w-14 h-14 shadow-xl shadow-primary/20 scale-110">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_stories</span>
-        </div>
-        <Link to={post.studentsData?.length > 0 ? `/profile/${post.studentsData[0].slug}` : `/profile/${post.studentSlug}`} className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
-          <span className="material-symbols-outlined">school</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Profile</span>
-        </Link>
-        <Link to="/notifications" className="flex flex-col items-center justify-center text-slate-400 px-4 py-2">
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="text-[10px] font-black uppercase tracking-tighter mt-1">Activity</span>
-        </Link>
-      </nav>
+
     </div>
   );
 };
