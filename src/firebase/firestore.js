@@ -446,29 +446,46 @@ export const getCriteriaList = async () => {
 
 // ─── REAL-TIME LISTENERS ──────────────────────────────────────────────────────
 export const listenToAchievements = (callback, filters = {}) => {
-  let constraints = [where('status', '==', 'published'), limit(20)];
+  let constraints = [limit(50)];
   if (filters.studentId) constraints.push(where('studentId', '==', filters.studentId));
-  return onSnapshot(query(collection(db, 'achievements'), ...constraints), (snap) => {
+  
+  // We remove the hard 'published' filter here because older docs might not have it.
+  // We'll filter in the component if needed, or rely on the query to just get latest.
+  const q = query(collection(db, 'achievements'), ...constraints);
+  
+  return onSnapshot(q, (snap) => {
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // If we want to enforce published for public users, we can do it here:
+    // const filtered = data.filter(item => item.status === 'published' || !item.status);
     callback(data.sort((a, b) => {
       const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime());
       const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime());
       return tB - tA;
     }));
+  }, (err) => {
+    console.error("Achievements listener error:", err);
+    callback([]);
   });
 };
 
 export const listenToNewsFeed = (callback, institution = null) => {
-  let constraints = [where('status', '==', 'published'), limit(20)];
+  let constraints = [limit(50)];
   if (institution) constraints.push(where('institution', '==', institution));
+  
   const q = query(collection(db, 'news'), ...constraints);
+  
   return onSnapshot(q, (snap) => {
     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    callback(data.sort((a, b) => {
+    // Only show published news
+    const filtered = data.filter(item => item.status === 'published' || !item.status);
+    callback(filtered.sort((a, b) => {
       const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime());
       const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime());
       return tB - tA;
     }));
+  }, (err) => {
+    console.error("News listener error:", err);
+    callback([]);
   });
 };
 

@@ -699,11 +699,15 @@ export const ExploreAchievements = () => {
     return tB - tA;
   });
  
-  const heroItem = feedItems[0];
-  const majorItem = feedItems[1];
-  const smallItem = feedItems[2];
-  const medItem1 = feedItems[3];
-  const remainingItems = feedItems.slice(4);
+  // Separate featured items (logic from HomeFeed)
+  const featuredItems = feedItems.filter(item => item.featured);
+  const regularItems = feedItems.filter(item => !item.featured);
+ 
+  const heroItem = regularItems[0];
+  const majorItem = regularItems[1];
+  const smallItem = regularItems[2];
+  const medItem1 = regularItems[3];
+  const remainingItems = regularItems.slice(4);
  
   // ── Achievements tab state ──
   const [achieverTab, setAchieverTab] = useState("global");
@@ -868,11 +872,50 @@ export const ExploreAchievements = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 space-y-10">
  
         {/* ══════════════════════════════════════════
+            SECTION 0 — FEATURED (by Admin)
+        ══════════════════════════════════════════ */}
+        {featuredItems.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-primary/20">
+                Featured Achiever ⭐
+              </div>
+              <div className="h-px flex-grow bg-outline-variant/30"></div>
+            </div>
+            
+            <div className="flex gap-6 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x">
+              {featuredItems.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => navigate(`/achievement/${item.postSlug || item.id}`)}
+                  className="flex-shrink-0 w-[85vw] md:w-[400px] h-[220px] rounded-[2.5rem] relative overflow-hidden group cursor-pointer snap-center shadow-xl shadow-primary/5 border border-outline-variant/20"
+                >
+                  <img 
+                    src={item.imageUrl || item.imageURL || 'https://images.unsplash.com/photo-1523240715639-6636dd74e177?auto=format&fit=crop&q=80'} 
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    alt={item.title}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 p-8 w-full space-y-2">
+                    <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{item.category}</span>
+                    <h3 className="text-white text-xl font-bold font-headline leading-tight line-clamp-1">{item.title}</h3>
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="material-symbols-outlined text-secondary-container text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                      <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{item.institution}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+ 
+        {/* ══════════════════════════════════════════
             SECTION 1 — SEARCH (single row)
         ══════════════════════════════════════════ */}
         <section>
           <div className="mb-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-outline font-inter">Discover Excellence</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-outline font-inter">Global Student Network</span>
             <h1 className="text-3xl font-extrabold font-headline text-primary mt-1 tracking-tight">Explore</h1>
           </div>
  
@@ -1255,7 +1298,7 @@ export const ExploreAchievements = () => {
         </Link>
  
         {/* ✅ FIXED: Activity icon now shows Instagram-style unread badge */}
-        <Link to="/Activity" className="relative flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
+        <Link to="/activity" className="relative flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
           {unreadCount > 0 && (
             <span
               className="absolute -top-0.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center leading-none badge-pop"

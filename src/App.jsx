@@ -78,21 +78,6 @@
 //       alert('Success! Admin account created. You are now logged in as Super Admin.');
 //       window.location.href = '/admin';
 //     } catch (e) {
-//       alert('Error: ' + e.message + '\n\nIf it says email-already-in-use, you already created it! Just go to Login instead.');
-//     }
-//     setLoading(false);
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-surface flex flex-col items-center justify-center text-center px-6">
-//       <div className="bg-surface-container-low p-8 rounded-2xl max-w-md w-full shadow-lg">
-//         <span className="material-symbols-outlined text-6xl text-primary mb-4">admin_panel_settings</span>
-//         <h1 className="font-headline text-2xl font-extrabold text-primary mb-2">Create Super Admin</h1>
-//         <p className="text-on-surface-variant text-sm mb-6">Creates your master admin account directly, bypassing the regular signup form.</p>
-        
-//         <form onSubmit={handleCreateAdmin} className="flex flex-col gap-4 text-left">
-//           <div>
-//             <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Admin Email</label>
 //             <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-12 bg-surface-container rounded-xl px-4 mt-1" required />
 //           </div>
 //           <div>
@@ -223,6 +208,7 @@ import { db } from './firebase/config';
  
 // Auth
 import { Login, Signup, ForgotPassword } from './pages/auth/Auth';
+import { ForcePasswordReset } from './pages/auth/ForcePasswordReset';
 
 // Student
 import { HomeFeed } from './pages/student/HomeFeed';
@@ -239,6 +225,7 @@ import { AdminNewsList } from './pages/admin/AdminNews';
 import { AdminNewsEditor } from './pages/admin/AdminNewsEditor';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminCriteriaEditor } from './pages/admin/AdminCriteriaEditor';
+
  
 // Teacher
 import { TeacherDashboard, TeacherStudents } from './pages/teacher/TeacherDashboard';

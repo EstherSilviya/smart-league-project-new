@@ -374,7 +374,7 @@ export const HomeFeed = () => {
           <span className="material-symbols-outlined">event</span>
           <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Events</span>
         </Link>
-        <Link to="/notifications" className="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
+        <Link to="/activity" className="flex flex-col items-center justify-center text-on-surface-variant px-4 py-2 hover:text-primary transition-colors">
           <span className="material-symbols-outlined">notifications</span>
           <span className="text-[11px] font-medium tracking-tight font-inter mt-1">Activity</span>
         </Link>
